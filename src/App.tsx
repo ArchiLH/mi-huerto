@@ -8,6 +8,7 @@ import Alertas from './pages/Alertas'
 import Sensores from './pages/Sensores'
 import Historial from './pages/Historial'
 import Plantas from './pages/Plantas'
+import Simulador from './pages/Simulador'
 
 function AppRoutes() {
   const { user, loading } = useAuth()
@@ -34,6 +35,7 @@ function AppRoutes() {
         <Route path="/sensores" element={<Sensores />} />
         <Route path="/historial" element={<Historial />} />
         <Route path="/plantas" element={<Plantas />} />
+        <Route path="/simulador" element={<Simulador />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Layout>

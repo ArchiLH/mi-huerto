@@ -7,6 +7,7 @@ const navItems = [
   { to: '/sensores', icon: '📡', label: 'Sensores' },
   { to: '/alertas', icon: '🔔', label: 'Alertas' },
   { to: '/historial', icon: '📊', label: 'Historial' },
+  { to: '/simulador', icon: '⚙️', label: 'Simulador' },
 ]
 
 export default function Layout({ children }: { children: React.ReactNode }) {
