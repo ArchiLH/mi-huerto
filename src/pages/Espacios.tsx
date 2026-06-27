@@ -45,10 +45,6 @@ export default function Espacios() {
   const [showPlantPicker, setShowPlantPicker] = useState(false)
   const [selectedPlantId, setSelectedPlantId] = useState<number | null>(null)
 
-  useEffect(() => {
-    loadData()
-  }, [id])
-
   const loadData = async () => {
     setLoading(true)
 
@@ -95,6 +91,10 @@ export default function Espacios() {
 
     setLoading(false)
   }
+
+  useEffect(() => {
+    loadData()
+  }, [id])
 
   const assignPlant = async (plantId: number | null) => {
     await supabase

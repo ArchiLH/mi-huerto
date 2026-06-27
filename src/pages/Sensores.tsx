@@ -27,8 +27,6 @@ export default function Sensores() {
     min_humidity: 30, max_humidity: 80
   })
 
-  useEffect(() => { loadData() }, [])
-
   const loadData = async () => {
     if (!user) return
 
@@ -48,6 +46,8 @@ export default function Sensores() {
     setSpaces(spaceData ?? [])
     setLoading(false)
   }
+
+  useEffect(() => { loadData() }, [])
 
   const openAdd = () => {
     setEditingSensor(null)

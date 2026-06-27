@@ -6,8 +6,8 @@ const navItems = [
   { to: '/plantas', icon: '🌿', label: 'Plantas' },
   { to: '/sensores', icon: '📡', label: 'Sensores' },
   { to: '/alertas', icon: '🔔', label: 'Alertas' },
-  { to: '/historial', icon: '📊', label: 'Historial' },
-  { to: '/simulador', icon: '⚙️', label: 'Simulador' },
+  { to: '/simulador', icon: '🧪', label: 'Simular' },
+  { to: '/configuracion', icon: '⚙️', label: 'Config' },
 ]
 
 export default function Layout({ children }: { children: React.ReactNode }) {

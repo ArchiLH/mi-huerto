@@ -18,8 +18,6 @@ export default function Historial() {
   const [readings, setReadings] = useState<Reading[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => { loadReadings() }, [])
-
   const loadReadings = async () => {
     if (!user) return
 
@@ -38,6 +36,8 @@ export default function Historial() {
     setReadings((data as Reading[]) ?? [])
     setLoading(false)
   }
+
+  useEffect(() => { loadReadings() }, [])
 
   return (
     <div className="space-y-5">

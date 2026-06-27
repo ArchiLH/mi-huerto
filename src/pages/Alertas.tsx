@@ -37,8 +37,6 @@ export default function Alertas() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'pending' | 'all'>('pending')
 
-  useEffect(() => { loadAlerts() }, [])
-
   const loadAlerts = async () => {
     if (!user) return
 
@@ -91,6 +89,8 @@ export default function Alertas() {
     setAlerts(enriched)
     setLoading(false)
   }
+
+  useEffect(() => { loadAlerts() }, [])
 
   const acknowledge = async (id: number) => {
     await supabase

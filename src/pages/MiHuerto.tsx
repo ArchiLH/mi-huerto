@@ -115,13 +115,6 @@ export default function MiHuerto() {
   const [loading, setLoading] = useState(true)
   const initialized = useRef(false)
 
-  useEffect(() => {
-    if (!initialized.current) {
-      initialized.current = true
-      loadSpaces()
-    }
-  }, [])
-
   const loadSpaces = async () => {
     if (!user) return
 
@@ -195,6 +188,13 @@ export default function MiHuerto() {
     setSpaces(enriched)
     setLoading(false)
   }
+
+  useEffect(() => {
+    if (!initialized.current) {
+      initialized.current = true
+      loadSpaces()
+    }
+  }, [])
 
   const activeCount = spaces.filter(s => s.plant_id !== null).length
   const alertCount = spaces.reduce((acc, s) => acc + (s.unacknowledged_alerts ?? 0), 0)

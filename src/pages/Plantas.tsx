@@ -17,10 +17,6 @@ export default function Plantas() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
-  useEffect(() => {
-    loadPlants()
-  }, [])
-
   const loadPlants = async () => {
     const { data } = await supabase
       .from('plant_catalog')
@@ -30,6 +26,10 @@ export default function Plantas() {
     setPlants((data as Plant[]) ?? [])
     setLoading(false)
   }
+
+  useEffect(() => {
+    loadPlants()
+  }, [])
 
   const filtered = plants.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase())

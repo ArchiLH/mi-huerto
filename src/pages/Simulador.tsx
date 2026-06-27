@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { sendTelegramAlert } from '../lib/telegram'
 
 type Sensor = {
   id: number
@@ -19,6 +20,13 @@ const careMessages: Record<string, string> = {
   humidity_low: '💧 Riega la planta o aumenta la humedad del ambiente.',
 }
 
+const alertTypeLabel: Record<string, string> = {
+  temp_high: '🌡️ Temperatura muy alta',
+  temp_low: '🥶 Temperatura muy baja',
+  humidity_high: '💧 Exceso de humedad',
+  humidity_low: '🏜️ Poca humedad',
+}
+
 export default function Simulador() {
   const { user } = useAuth()
   const [sensors, setSensors] = useState<Sensor[]>([])
@@ -27,11 +35,13 @@ export default function Simulador() {
   const [humidity, setHumidity] = useState('60')
   const [loading, setLoading] = useState(false)
   const [lastResult, setLastResult] = useState<string | null>(null)
-
-  useEffect(() => { loadSensors() }, [])
+  const [userChatId, setUserChatId] = useState<string | null>(null)
+  const [telegramEnabled, setTelegramEnabled] = useState(false)
 
   const loadSensors = async () => {
     if (!user) return
+
+    // Cargar sensores
     const { data } = await supabase
       .from('sensors')
       .select('*, spaces(name)')
@@ -39,7 +49,21 @@ export default function Simulador() {
 
     setSensors((data as Sensor[]) ?? [])
     if (data && data.length > 0) setSelectedSensor(data[0] as Sensor)
+
+    // Cargar configuración de Telegram del usuario
+    const { data: settings } = await supabase
+      .from('user_settings')
+      .select('telegram_chat_id, telegram_enabled')
+      .eq('id', user.id)
+      .single()
+
+    if (settings) {
+      setUserChatId(settings.telegram_chat_id ?? null)
+      setTelegramEnabled(settings.telegram_enabled ?? false)
+    }
   }
+
+  useEffect(() => { loadSensors() }, [])
 
   const sendReading = async () => {
     if (!selectedSensor) { alert('Selecciona un sensor'); return }
@@ -110,8 +134,36 @@ export default function Simulador() {
     }
 
     if (alerts.length > 0) {
+      // Guardar alertas en Supabase
       await supabase.from('alerts').insert(alerts)
-      setLastResult(`✅ Lectura guardada + ⚠️ ${alerts.length} alerta(s) generada(s)`)
+
+      // Enviar Telegram solo si el usuario lo tiene activado
+      if (telegramEnabled && userChatId) {
+        for (const alert of alerts) {
+          const mensaje = `
+🌿 <b>Mi Huerto — Alerta</b>
+
+${alertTypeLabel[alert.type]}
+
+📍 Sensor: <b>${selectedSensor.name}</b>
+📦 Espacio: <b>${selectedSensor.spaces?.name ?? 'Sin espacio'}</b>
+🌡️ Temperatura: <b>${temp}°C</b>
+💧 Humedad: <b>${hum}%</b>
+
+💡 <i>${alert.care_message}</i>
+
+⏰ ${new Date().toLocaleString('es-PE', {
+  day: '2-digit', month: '2-digit', year: 'numeric',
+  hour: '2-digit', minute: '2-digit'
+})}
+          `.trim()
+
+          await sendTelegramAlert(mensaje, userChatId)
+        }
+        setLastResult(`✅ Lectura guardada + ⚠️ ${alerts.length} alerta(s) generada(s) + 📨 Telegram enviado`)
+      } else {
+        setLastResult(`✅ Lectura guardada + ⚠️ ${alerts.length} alerta(s) generada(s)`)
+      }
     } else {
       setLastResult('✅ Lectura guardada — todo dentro de los rangos normales')
     }
@@ -141,6 +193,20 @@ export default function Simulador() {
         <p className="text-slate-400 text-sm mt-1">
           Envía lecturas de prueba para ver cómo reacciona el sistema
         </p>
+      </div>
+
+      {/* ESTADO TELEGRAM */}
+      <div className={`rounded-xl px-4 py-3 text-sm flex items-center gap-2 ${
+        telegramEnabled && userChatId
+          ? 'bg-green-900/30 border border-green-500/30 text-green-400'
+          : 'bg-slate-800 border border-slate-700 text-slate-400'
+      }`}>
+        <span>{telegramEnabled && userChatId ? '✅' : '⚠️'}</span>
+        <span>
+          {telegramEnabled && userChatId
+            ? 'Telegram conectado — recibirás alertas'
+            : 'Telegram no configurado — ve a ⚙️ Config para activarlo'}
+        </span>
       </div>
 
       {sensors.length === 0 ? (
