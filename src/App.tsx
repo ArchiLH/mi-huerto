@@ -10,6 +10,7 @@ import Historial from './pages/Historial'
 import Plantas from './pages/Plantas'
 import Simulador from './pages/Simulador'
 import Configuracion from './pages/Configuracion'
+import Dashboard from './pages/Dashboard'
 
 function AppRoutes() {
   const { user, loading } = useAuth()
@@ -39,6 +40,7 @@ function AppRoutes() {
         <Route path="/simulador" element={<Simulador />} />
         <Route path="*" element={<Navigate to="/" />} />
         <Route path="/configuracion" element={<Configuracion />} />
+        <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </Layout>
   )

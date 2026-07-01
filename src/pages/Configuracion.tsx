@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { useNavigate } from 'react-router-dom'
 
 const BOT_USERNAME = 'MiHuertoSGBot'
 
@@ -10,6 +11,7 @@ function generateCode() {
 
 export default function Configuracion() {
   const { user, signOut } = useAuth()
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [connected, setConnected] = useState(false)
   const [connecting, setConnecting] = useState(false)
@@ -38,7 +40,6 @@ export default function Configuracion() {
 
     const newCode = generateCode()
 
-    // Guardar código en Supabase
     await supabase.from('telegram_codes').insert({
       user_id: user.id,
       code: newCode,
@@ -47,8 +48,6 @@ export default function Configuracion() {
 
     setCode(newCode)
     setConnecting(false)
-
-    // Abrir Telegram con el código
     window.open(`https://t.me/${BOT_USERNAME}?start=${newCode}`, '_blank')
   }
 
@@ -122,7 +121,6 @@ export default function Configuracion() {
         </div>
 
         {connected ? (
-          /* YA CONECTADO */
           <div className="space-y-3">
             <div className="flex items-center gap-3 bg-green-900/30 border border-green-500/30 rounded-xl px-4 py-3">
               <span className="text-2xl">✅</span>
@@ -139,7 +137,6 @@ export default function Configuracion() {
             </button>
           </div>
         ) : code ? (
-          /* ESPERANDO CONEXIÓN */
           <div className="space-y-4">
             <div className="bg-slate-800 rounded-xl p-5 text-center space-y-3">
               <p className="text-slate-300 text-sm">
@@ -153,7 +150,6 @@ export default function Configuracion() {
                 El bot lo recibe automáticamente, no necesitas escribirlo
               </p>
             </div>
-
             <button
               onClick={checkConnection}
               disabled={checking}
@@ -161,7 +157,6 @@ export default function Configuracion() {
             >
               {checking ? 'Verificando...' : '✅ Ya presioné Start — Verificar'}
             </button>
-
             <button
               onClick={() => window.open(`https://t.me/${BOT_USERNAME}?start=${code}`, '_blank')}
               className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm py-2.5 rounded-xl transition"
@@ -170,7 +165,6 @@ export default function Configuracion() {
             </button>
           </div>
         ) : (
-          /* SIN CONECTAR */
           <div className="space-y-3">
             <div className="bg-slate-800 rounded-xl p-4 text-center space-y-2">
               <p className="text-4xl">📵</p>
@@ -188,6 +182,50 @@ export default function Configuracion() {
             </button>
           </div>
         )}
+      </div>
+
+      {/* HERRAMIENTAS */}
+      <div className="bg-slate-900 rounded-2xl p-4 space-y-3">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-2xl">🛠️</span>
+          <h2 className="font-semibold">Herramientas</h2>
+        </div>
+
+        <button
+          onClick={() => navigate('/simulador')}
+          className="w-full flex items-center gap-3 bg-slate-800 hover:bg-slate-700 px-4 py-3 rounded-xl transition"
+        >
+          <span className="text-2xl">🧪</span>
+          <div className="text-left">
+            <p className="text-sm font-medium">Simulador de lecturas</p>
+            <p className="text-xs text-slate-400">Envía datos de prueba a tus sensores</p>
+          </div>
+          <span className="text-slate-500 ml-auto">›</span>
+        </button>
+
+        <button
+          onClick={() => navigate('/historial')}
+          className="w-full flex items-center gap-3 bg-slate-800 hover:bg-slate-700 px-4 py-3 rounded-xl transition"
+        >
+          <span className="text-2xl">📈</span>
+          <div className="text-left">
+            <p className="text-sm font-medium">Historial de lecturas</p>
+            <p className="text-xs text-slate-400">Ve la evolución de tus plantas</p>
+          </div>
+          <span className="text-slate-500 ml-auto">›</span>
+        </button>
+
+        <button
+          onClick={() => navigate('/sensores')}
+          className="w-full flex items-center gap-3 bg-slate-800 hover:bg-slate-700 px-4 py-3 rounded-xl transition"
+        >
+          <span className="text-2xl">📡</span>
+          <div className="text-left">
+            <p className="text-sm font-medium">Gestionar sensores</p>
+            <p className="text-xs text-slate-400">Agrega, edita o elimina sensores</p>
+          </div>
+          <span className="text-slate-500 ml-auto">›</span>
+        </button>
       </div>
 
       {/* CERRAR SESIÓN */}

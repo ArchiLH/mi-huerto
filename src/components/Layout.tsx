@@ -1,12 +1,12 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import AlertPopup from './AlertPopup'
 
 const navItems = [
   { to: '/', icon: '🏡', label: 'Huerto' },
   { to: '/plantas', icon: '🌿', label: 'Plantas' },
-  { to: '/sensores', icon: '📡', label: 'Sensores' },
+  { to: '/dashboard', icon: '📊', label: 'Dashboard' },
   { to: '/alertas', icon: '🔔', label: 'Alertas' },
-  { to: '/simulador', icon: '🧪', label: 'Simular' },
   { to: '/configuracion', icon: '⚙️', label: 'Config' },
 ]
 
@@ -63,6 +63,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           ))}
         </div>
       </nav>
+
+      {/* ALERTA EMERGENTE */}
+      <AlertPopup />
 
     </div>
   )
