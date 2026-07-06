@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 export default function Success() {
   const [searchParams] = useSearchParams()
   const [counting, setCounting] = useState(5)
-  const [activated, setActivated] = useState(false)
+  const [, setActivated] = useState(false)
 
   useEffect(() => {
     const userId = searchParams.get('user_id')
