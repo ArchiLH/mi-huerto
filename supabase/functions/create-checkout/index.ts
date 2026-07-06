@@ -4,15 +4,14 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
   apiVersion: '2023-10-16',
 })
 
-// 1. Definimos las cabeceras CORS obligatorias
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*', // Permite peticiones desde localhost o cualquier dominio
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 Deno.serve(async (req) => {
-  // 2. Respondemos inmediatamente al "Preflight" (OPTIONS) del navegador
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -20,9 +19,16 @@ Deno.serve(async (req) => {
   try {
     const { user_id, email } = await req.json()
 
+    if (!user_id || !email) {
+      return new Response(
+        JSON.stringify({ error: 'user_id y email son requeridos' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      mode: 'subscription',
+      mode: 'payment',
       customer_email: email,
       line_items: [
         {
@@ -35,23 +41,15 @@ Deno.serve(async (req) => {
       metadata: { user_id },
     })
 
-    // 3. Devolvemos la URL agregando las cabeceras CORS en el éxito
     return new Response(
       JSON.stringify({ url: session.url }),
-      { 
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
-
-  } catch (error) {
-    // 4. Manejo de errores por si Stripe o el JSON fallan
+  } catch (error: any) {
+    console.error('Stripe error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      { 
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })
