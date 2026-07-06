@@ -29,48 +29,83 @@ const demoSlides = [
   },
 ]
 
+type Screen = 'demo' | 'login' | 'register' | 'forgot'
+
 export default function Login() {
+  const [screen, setScreen] = useState<Screen>('demo')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [isRegister, setIsRegister] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [showAuth, setShowAuth] = useState(false)
+  const [successMsg, setSuccessMsg] = useState('')
   const [currentSlide, setCurrentSlide] = useState(0)
 
   useEffect(() => {
-    if (showAuth) return
+    if (screen !== 'demo') return
     const interval = setInterval(() => {
       setCurrentSlide(prev => (prev + 1) % demoSlides.length)
     }, 3000)
     return () => clearInterval(interval)
-  }, [showAuth])
+  }, [screen])
 
-  const handleSubmit = async () => {
+  const handleLogin = async () => {
     setLoading(true)
     setError('')
-
-    if (isRegister) {
-      const { error } = await supabase.auth.signUp({ email, password })
-      if (error) setError(error.message)
-      else alert('Revisa tu correo para confirmar tu cuenta')
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) setError('Correo o contraseña incorrectos')
-    }
-
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) setError('Correo o contraseña incorrectos')
     setLoading(false)
   }
 
-  // PANTALLA DE DEMO
-  if (!showAuth) {
+  const handleRegister = async () => {
+    setLoading(true)
+    setError('')
+    if (password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres')
+      setLoading(false)
+      return
+    }
+    const { error } = await supabase.auth.signUp({ email, password })
+    if (error) setError(error.message)
+    else {
+      setSuccessMsg('✅ Revisa tu correo para confirmar tu cuenta')
+      setError('')
+    }
+    setLoading(false)
+  }
+
+  const handleForgot = async () => {
+    setLoading(true)
+    setError('')
+    if (!email) {
+      setError('Ingresa tu correo primero')
+      setLoading(false)
+      return
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    if (error) setError(error.message)
+    else setSuccessMsg('✅ Revisa tu correo para restablecer tu contraseña')
+    setLoading(false)
+  }
+
+  const resetForm = () => {
+    setError('')
+    setSuccessMsg('')
+    setEmail('')
+    setPassword('')
+    setShowPassword(false)
+  }
+
+  // DEMO
+  if (screen === 'demo') {
     const slide = demoSlides[currentSlide]
     return (
       <div
         className="min-h-screen flex flex-col transition-all duration-700"
         style={{ backgroundColor: '#0a1a0f' }}
       >
-
         {/* LOGO */}
         <div className="flex items-center gap-2 px-6 pt-10">
           <span className="text-3xl">🌿</span>
@@ -85,15 +120,10 @@ export default function Login() {
           >
             <span className="animate-bounce inline-block">{slide.emoji}</span>
           </div>
-
-          <h2 className="text-2xl font-bold text-white mb-3">
-            {slide.title}
-          </h2>
+          <h2 className="text-2xl font-bold text-white mb-3">{slide.title}</h2>
           <p className="text-base leading-relaxed max-w-xs" style={{ color: '#6b9e6e' }}>
             {slide.description}
           </p>
-
-          {/* DOTS */}
           <div className="flex gap-2 mt-8">
             {demoSlides.map((_, i) => (
               <button
@@ -130,9 +160,7 @@ export default function Login() {
                 <p className="text-xs font-medium text-white">{plant.label}</p>
                 <p className="text-xs text-orange-400 mt-1">{plant.temp}</p>
                 <p className="text-xs text-blue-400">{plant.hum}</p>
-                {!plant.ok && (
-                  <p className="text-xs text-red-400 mt-1">⚠️</p>
-                )}
+                {!plant.ok && <p className="text-xs text-red-400 mt-1">⚠️</p>}
               </div>
             ))}
           </div>
@@ -141,36 +169,106 @@ export default function Login() {
         {/* BOTONES */}
         <div className="px-6 pb-10 space-y-3">
           <button
-            onClick={() => setShowAuth(true)}
+            onClick={() => { resetForm(); setScreen('register') }}
             className="w-full text-white font-bold py-4 rounded-2xl transition text-lg"
             style={{ backgroundColor: '#2d6a35' }}
           >
             Comenzar ahora 🌱
           </button>
           <button
-            onClick={() => { setShowAuth(true); setIsRegister(false) }}
+            onClick={() => { resetForm(); setScreen('login') }}
             className="w-full py-3 rounded-2xl transition text-sm"
             style={{ backgroundColor: '#0f2317', color: '#6b9e6e', border: '1px solid #1a3a20' }}
           >
             Ya tengo cuenta — Iniciar sesión
           </button>
         </div>
-
       </div>
     )
   }
 
-  // PANTALLA DE AUTH
-  return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ backgroundColor: '#0a1a0f' }}
-    >
+  // FORGOT PASSWORD
+  if (screen === 'forgot') {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#0a1a0f' }}>
+        <button
+          onClick={() => { resetForm(); setScreen('login') }}
+          className="flex items-center gap-2 px-5 pt-8 transition w-fit text-sm"
+          style={{ color: '#6b9e6e' }}
+        >
+          ← Volver
+        </button>
 
-      {/* BACK */}
+        <div className="flex-1 flex items-center justify-center p-5">
+          <div className="w-full max-w-sm">
+
+            <div className="text-center mb-8">
+              <div className="text-5xl mb-3">🔑</div>
+              <h1 className="text-2xl font-bold text-white">Recuperar contraseña</h1>
+              <p className="text-sm mt-1" style={{ color: '#6b9e6e' }}>
+                Te enviaremos un enlace a tu correo
+              </p>
+            </div>
+
+            <div
+              className="rounded-2xl p-6 space-y-4"
+              style={{ backgroundColor: '#0f2317', border: '1px solid #1a3a20' }}
+            >
+              {error && (
+                <div className="bg-red-900/50 border border-red-500/50 text-red-400 text-sm rounded-xl p-3">
+                  {error}
+                </div>
+              )}
+
+              {successMsg && (
+                <div
+                  className="border text-sm rounded-xl p-3"
+                  style={{ backgroundColor: '#0a2a10', borderColor: '#2d6a35', color: '#a3d9a5' }}
+                >
+                  {successMsg}
+                </div>
+              )}
+
+              <input
+                type="email"
+                placeholder="Correo electrónico"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="w-full text-white placeholder-slate-500 rounded-xl px-4 py-3 outline-none"
+                style={{ backgroundColor: '#0a1a0f', border: '1px solid #1a3a20' }}
+                onFocus={e => e.target.style.borderColor = '#4ade80'}
+                onBlur={e => e.target.style.borderColor = '#1a3a20'}
+              />
+
+              <button
+                onClick={handleForgot}
+                disabled={loading}
+                className="w-full text-white font-semibold rounded-xl py-3 transition disabled:opacity-50"
+                style={{ backgroundColor: '#2d6a35' }}
+              >
+                {loading ? 'Enviando...' : '📧 Enviar enlace de recuperación'}
+              </button>
+
+              <button
+                onClick={() => { resetForm(); setScreen('login') }}
+                className="w-full text-sm transition"
+                style={{ color: '#6b9e6e' }}
+              >
+                ← Volver al inicio de sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // LOGIN / REGISTER
+  return (
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#0a1a0f' }}>
       <button
-        onClick={() => setShowAuth(false)}
-        className="flex items-center gap-2 px-5 pt-8 transition w-fit"
+        onClick={() => { resetForm(); setScreen('demo') }}
+        className="flex items-center gap-2 px-5 pt-8 transition w-fit text-sm"
         style={{ color: '#6b9e6e' }}
       >
         ← Volver
@@ -179,22 +277,20 @@ export default function Login() {
       <div className="flex-1 flex items-center justify-center p-5">
         <div className="w-full max-w-sm">
 
-          {/* LOGO */}
           <div className="text-center mb-8">
             <div className="text-5xl mb-3">🌿</div>
             <h1 className="text-2xl font-bold text-white">Mi Huerto</h1>
             <p className="text-sm mt-1" style={{ color: '#6b9e6e' }}>
-              {isRegister ? 'Crea tu cuenta gratis' : 'Bienvenido de vuelta'}
+              {screen === 'register' ? 'Crea tu cuenta gratis' : 'Bienvenido de vuelta'}
             </p>
           </div>
 
-          {/* FORM */}
           <div
             className="rounded-2xl p-6 space-y-4"
             style={{ backgroundColor: '#0f2317', border: '1px solid #1a3a20' }}
           >
             <h2 className="text-lg font-semibold text-white">
-              {isRegister ? 'Crear cuenta' : 'Iniciar sesión'}
+              {screen === 'register' ? 'Crear cuenta' : 'Iniciar sesión'}
             </h2>
 
             {error && (
@@ -203,54 +299,85 @@ export default function Login() {
               </div>
             )}
 
+            {successMsg && (
+              <div
+                className="border text-sm rounded-xl p-3"
+                style={{ backgroundColor: '#0a2a10', borderColor: '#2d6a35', color: '#a3d9a5' }}
+              >
+                {successMsg}
+              </div>
+            )}
+
+            {/* EMAIL */}
             <input
               type="email"
               placeholder="Correo electrónico"
               value={email}
               onChange={e => setEmail(e.target.value)}
               className="w-full text-white placeholder-slate-500 rounded-xl px-4 py-3 outline-none"
-              style={{
-                backgroundColor: '#0a1a0f',
-                border: '1px solid #1a3a20',
-              }}
+              style={{ backgroundColor: '#0a1a0f', border: '1px solid #1a3a20' }}
               onFocus={e => e.target.style.borderColor = '#4ade80'}
               onBlur={e => e.target.style.borderColor = '#1a3a20'}
             />
 
-            <input
-              type="password"
-              placeholder="Contraseña"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="w-full text-white placeholder-slate-500 rounded-xl px-4 py-3 outline-none"
-              style={{
-                backgroundColor: '#0a1a0f',
-                border: '1px solid #1a3a20',
-              }}
-              onFocus={e => e.target.style.borderColor = '#4ade80'}
-              onBlur={e => e.target.style.borderColor = '#1a3a20'}
-            />
+            {/* CONTRASEÑA CON OJO */}
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Contraseña"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && (screen === 'login' ? handleLogin() : handleRegister())}
+                className="w-full text-white placeholder-slate-500 rounded-xl px-4 py-3 pr-12 outline-none"
+                style={{ backgroundColor: '#0a1a0f', border: '1px solid #1a3a20' }}
+                onFocus={e => e.target.style.borderColor = '#4ade80'}
+                onBlur={e => e.target.style.borderColor = '#1a3a20'}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-lg transition hover:opacity-80"
+                style={{ color: '#6b9e6e' }}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
 
+            {/* BOTÓN PRINCIPAL */}
             <button
-              onClick={handleSubmit}
+              onClick={screen === 'login' ? handleLogin : handleRegister}
               disabled={loading}
               className="w-full text-white font-semibold rounded-xl py-3 transition disabled:opacity-50"
               style={{ backgroundColor: '#2d6a35' }}
             >
-              {loading ? 'Cargando...' : isRegister ? 'Registrarme' : 'Entrar'}
+              {loading ? 'Cargando...' : screen === 'register' ? 'Registrarme' : 'Entrar'}
             </button>
 
+            {/* OLVIDÉ MI CONTRASEÑA */}
+            {screen === 'login' && (
+              <button
+                onClick={() => { resetForm(); setScreen('forgot') }}
+                className="w-full text-xs transition"
+                style={{ color: '#4ade80' }}
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
+            )}
+
+            {/* CAMBIAR ENTRE LOGIN Y REGISTER */}
             <button
-              onClick={() => setIsRegister(!isRegister)}
+              onClick={() => {
+                resetForm()
+                setScreen(screen === 'login' ? 'register' : 'login')
+              }}
               className="w-full text-sm transition"
               style={{ color: '#6b9e6e' }}
             >
-              {isRegister
+              {screen === 'register'
                 ? '¿Ya tienes cuenta? Inicia sesión'
                 : '¿No tienes cuenta? Regístrate gratis'}
             </button>
           </div>
-
         </div>
       </div>
     </div>

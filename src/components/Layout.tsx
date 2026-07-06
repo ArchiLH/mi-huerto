@@ -30,6 +30,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       .select('is_premium')
       .eq('id', user!.id)
       .single()
+
     setIsPremium(data?.is_premium ?? false)
   }
 
@@ -43,23 +44,42 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       alert('🔒 El asistente IA es exclusivo para usuarios Premium. ¡Actualiza tu plan!')
       return
     }
+
     setShowChat(true)
   }
 
   return (
-    <div className="min-h-screen text-white" style={{ backgroundColor: '#0a1a0f' }}>
-
+    <div
+      className="min-h-screen text-white"
+      style={{ backgroundColor: '#0a1a0f' }}
+    >
       {/* TOP BAR */}
       <header
         className="sticky top-0 z-10 backdrop-blur border-b px-5 py-3 flex items-center justify-between"
-        style={{ backgroundColor: '#0a1a0faa', borderColor: '#1a3a20' }}
+        style={{
+          backgroundColor: '#0a1a0faa',
+          borderColor: '#1a3a20',
+        }}
       >
         <div className="flex items-center gap-2">
           <span className="text-2xl">🌿</span>
-          <span className="font-bold text-lg" style={{ color: '#a3d9a5' }}>Mi Huerto</span>
+          <span
+            className="font-bold text-lg"
+            style={{ color: '#a3d9a5' }}
+          >
+            Mi Huerto
+          </span>
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/perfil')}
+            className="transition hover:scale-110 text-xl"
+            title="Mi perfil"
+          >
+            👤
+          </button>
+
           <button
             onClick={handleChatClick}
             className="transition hover:scale-110 text-xl relative"
@@ -67,9 +87,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           >
             🤖
             {!isPremium && (
-              <span className="absolute -top-1 -right-1 text-xs">🔒</span>
+              <span className="absolute -top-1 -right-1 text-xs">
+                🔒
+              </span>
             )}
           </button>
+
           <button
             onClick={handleSignOut}
             className="text-sm transition"
@@ -88,7 +111,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* BOTTOM NAV */}
       <nav
         className="fixed bottom-0 left-0 right-0 border-t px-2 py-2"
-        style={{ backgroundColor: '#0f2317', borderColor: '#1a3a20' }}
+        style={{
+          backgroundColor: '#0f2317',
+          borderColor: '#1a3a20',
+        }}
       >
         <div className="flex justify-around max-w-2xl mx-auto">
           {navItems.map((item) => (
@@ -113,7 +139,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {showChat && <Chatbot onClose={() => setShowChat(false)} />}
       <AlertPopup />
-
     </div>
   )
 }

@@ -12,6 +12,7 @@ import Simulador from './pages/Simulador'
 import Configuracion from './pages/Configuracion'
 import Dashboard from './pages/Dashboard'
 import Success from './pages/Success'
+import Perfil from './pages/Perfil'
 
 function AppRoutes() {
   const { user, loading } = useAuth()
@@ -52,6 +53,7 @@ function AppRoutes() {
         <Route path="/configuracion" element={<Configuracion />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="*" element={<Navigate to="/" />} />
+        <Route path="/perfil" element={<Perfil />} />
       </Routes>
     </Layout>
   )
