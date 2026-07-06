@@ -6,31 +6,26 @@ const demoSlides = [
     emoji: '🏡',
     title: 'Tu huerto inteligente',
     description: 'Monitorea hasta 8 espacios de cultivo desde tu celular en tiempo real.',
-    bg: 'from-green-900/40 to-slate-900',
   },
   {
     emoji: '📡',
     title: 'Sensores en tiempo real',
     description: 'Conecta sensores a tus plantas y recibe datos de temperatura y humedad al instante.',
-    bg: 'from-blue-900/40 to-slate-900',
   },
   {
     emoji: '🔔',
     title: 'Alertas inteligentes',
     description: 'Te avisamos cuando una planta necesita agua, sombra o protección del frío.',
-    bg: 'from-amber-900/40 to-slate-900',
   },
   {
     emoji: '✈️',
     title: 'Notificaciones Telegram',
     description: 'Recibe alertas directamente en tu Telegram sin importar dónde estés.',
-    bg: 'from-purple-900/40 to-slate-900',
   },
   {
     emoji: '📊',
     title: 'Dashboard completo',
     description: 'Visualiza el estado de tu huerto con gráficas y estadísticas detalladas.',
-    bg: 'from-cyan-900/40 to-slate-900',
   },
 ]
 
@@ -71,23 +66,30 @@ export default function Login() {
   if (!showAuth) {
     const slide = demoSlides[currentSlide]
     return (
-      <div className={`min-h-screen bg-gradient-to-b ${slide.bg} flex flex-col transition-all duration-700`}>
+      <div
+        className="min-h-screen flex flex-col transition-all duration-700"
+        style={{ backgroundColor: '#0a1a0f' }}
+      >
 
         {/* LOGO */}
         <div className="flex items-center gap-2 px-6 pt-10">
           <span className="text-3xl">🌿</span>
-          <span className="text-xl font-bold text-white">Mi Huerto</span>
+          <span className="text-xl font-bold" style={{ color: '#a3d9a5' }}>Mi Huerto</span>
         </div>
 
         {/* SLIDES */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-          <div className="text-8xl mb-6 animate-bounce">
-            {slide.emoji}
+          <div
+            className="w-32 h-32 rounded-3xl flex items-center justify-center text-7xl mb-6 shadow-lg"
+            style={{ backgroundColor: '#0f2317', border: '1px solid #1a3a20' }}
+          >
+            <span className="animate-bounce inline-block">{slide.emoji}</span>
           </div>
+
           <h2 className="text-2xl font-bold text-white mb-3">
             {slide.title}
           </h2>
-          <p className="text-slate-300 text-base leading-relaxed max-w-xs">
+          <p className="text-base leading-relaxed max-w-xs" style={{ color: '#6b9e6e' }}>
             {slide.description}
           </p>
 
@@ -97,11 +99,12 @@ export default function Login() {
               <button
                 key={i}
                 onClick={() => setCurrentSlide(i)}
-                className={`rounded-full transition-all ${
-                  i === currentSlide
-                    ? 'w-6 h-2 bg-green-400'
-                    : 'w-2 h-2 bg-slate-600'
-                }`}
+                className="rounded-full transition-all"
+                style={{
+                  width: i === currentSlide ? '24px' : '8px',
+                  height: '8px',
+                  backgroundColor: i === currentSlide ? '#4ade80' : '#1a3a20',
+                }}
               />
             ))}
           </div>
@@ -117,11 +120,11 @@ export default function Login() {
             ].map((plant, i) => (
               <div
                 key={i}
-                className={`rounded-2xl p-3 text-center border ${
-                  plant.ok
-                    ? 'bg-slate-900/80 border-green-500/20'
-                    : 'bg-red-900/20 border-red-500/30'
-                }`}
+                className="rounded-2xl p-3 text-center"
+                style={{
+                  backgroundColor: plant.ok ? '#0f2317' : '#2a0f0f',
+                  border: `1px solid ${plant.ok ? '#1a3a20' : '#5a1a1a'}`,
+                }}
               >
                 <p className="text-2xl mb-1">{plant.icon}</p>
                 <p className="text-xs font-medium text-white">{plant.label}</p>
@@ -139,13 +142,15 @@ export default function Login() {
         <div className="px-6 pb-10 space-y-3">
           <button
             onClick={() => setShowAuth(true)}
-            className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-2xl transition text-lg"
+            className="w-full text-white font-bold py-4 rounded-2xl transition text-lg"
+            style={{ backgroundColor: '#2d6a35' }}
           >
             Comenzar ahora 🌱
           </button>
           <button
             onClick={() => { setShowAuth(true); setIsRegister(false) }}
-            className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-2xl transition text-sm"
+            className="w-full py-3 rounded-2xl transition text-sm"
+            style={{ backgroundColor: '#0f2317', color: '#6b9e6e', border: '1px solid #1a3a20' }}
           >
             Ya tengo cuenta — Iniciar sesión
           </button>
@@ -157,12 +162,16 @@ export default function Login() {
 
   // PANTALLA DE AUTH
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: '#0a1a0f' }}
+    >
 
       {/* BACK */}
       <button
         onClick={() => setShowAuth(false)}
-        className="flex items-center gap-2 px-5 pt-8 text-slate-400 hover:text-white transition w-fit"
+        className="flex items-center gap-2 px-5 pt-8 transition w-fit"
+        style={{ color: '#6b9e6e' }}
       >
         ← Volver
       </button>
@@ -174,13 +183,16 @@ export default function Login() {
           <div className="text-center mb-8">
             <div className="text-5xl mb-3">🌿</div>
             <h1 className="text-2xl font-bold text-white">Mi Huerto</h1>
-            <p className="text-slate-400 text-sm mt-1">
+            <p className="text-sm mt-1" style={{ color: '#6b9e6e' }}>
               {isRegister ? 'Crea tu cuenta gratis' : 'Bienvenido de vuelta'}
             </p>
           </div>
 
           {/* FORM */}
-          <div className="bg-slate-900 rounded-2xl p-6 space-y-4">
+          <div
+            className="rounded-2xl p-6 space-y-4"
+            style={{ backgroundColor: '#0f2317', border: '1px solid #1a3a20' }}
+          >
             <h2 className="text-lg font-semibold text-white">
               {isRegister ? 'Crear cuenta' : 'Iniciar sesión'}
             </h2>
@@ -196,7 +208,13 @@ export default function Login() {
               placeholder="Correo electrónico"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full bg-slate-800 text-white placeholder-slate-500 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full text-white placeholder-slate-500 rounded-xl px-4 py-3 outline-none"
+              style={{
+                backgroundColor: '#0a1a0f',
+                border: '1px solid #1a3a20',
+              }}
+              onFocus={e => e.target.style.borderColor = '#4ade80'}
+              onBlur={e => e.target.style.borderColor = '#1a3a20'}
             />
 
             <input
@@ -204,20 +222,28 @@ export default function Login() {
               placeholder="Contraseña"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full bg-slate-800 text-white placeholder-slate-500 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full text-white placeholder-slate-500 rounded-xl px-4 py-3 outline-none"
+              style={{
+                backgroundColor: '#0a1a0f',
+                border: '1px solid #1a3a20',
+              }}
+              onFocus={e => e.target.style.borderColor = '#4ade80'}
+              onBlur={e => e.target.style.borderColor = '#1a3a20'}
             />
 
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white font-semibold rounded-xl py-3 transition"
+              className="w-full text-white font-semibold rounded-xl py-3 transition disabled:opacity-50"
+              style={{ backgroundColor: '#2d6a35' }}
             >
               {loading ? 'Cargando...' : isRegister ? 'Registrarme' : 'Entrar'}
             </button>
 
             <button
               onClick={() => setIsRegister(!isRegister)}
-              className="w-full text-slate-400 text-sm hover:text-white transition"
+              className="w-full text-sm transition"
+              style={{ color: '#6b9e6e' }}
             >
               {isRegister
                 ? '¿Ya tienes cuenta? Inicia sesión'
