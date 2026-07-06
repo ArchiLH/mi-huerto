@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 export default function Success() {
-  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [counting, setCounting] = useState(5)
+  const [activated, setActivated] = useState(false)
 
   useEffect(() => {
     const userId = searchParams.get('user_id')
@@ -15,7 +15,8 @@ export default function Success() {
       setCounting(prev => {
         if (prev <= 1) {
           clearInterval(countdown)
-          navigate('/')
+          // Redirigir a la raíz de la app
+          window.location.href = '/'
           return 0
         }
         return prev - 1
@@ -32,6 +33,7 @@ export default function Success() {
         id: userId,
         is_premium: true,
       })
+    setActivated(true)
   }
 
   return (
@@ -39,7 +41,7 @@ export default function Success() {
       className="min-h-screen flex flex-col items-center justify-center p-6 text-center"
       style={{ backgroundColor: '#0a1a0f' }}
     >
-      {/* ICONO ÉXITO */}
+      {/* ICONO */}
       <div
         className="w-28 h-28 rounded-full flex items-center justify-center text-6xl mb-6 shadow-lg"
         style={{ backgroundColor: '#0f2317', border: '2px solid #2d6a35' }}
@@ -52,7 +54,7 @@ export default function Success() {
         ¡Bienvenido a Premium!
       </h1>
       <p className="text-lg mb-6" style={{ color: '#a3d9a5' }}>
-        Tu compra fue exitosa 🎉
+        Tu suscripción fue activada exitosamente 🎉
       </p>
 
       {/* BENEFICIOS */}
@@ -78,11 +80,26 @@ export default function Success() {
 
       {/* COUNTDOWN */}
       <p className="text-sm mb-4" style={{ color: '#6b9e6e' }}>
-        Redirigiendo al inicio en <span className="text-white font-bold">{counting}</span> segundos...
+        Redirigiendo a tu huerto en{' '}
+        <span className="text-white font-bold">{counting}</span> segundos...
       </p>
 
+      {/* BARRA DE PROGRESO */}
+      <div
+        className="w-full max-w-sm h-1.5 rounded-full mb-4 overflow-hidden"
+        style={{ backgroundColor: '#0f2317' }}
+      >
+        <div
+          className="h-full rounded-full transition-all duration-1000"
+          style={{
+            backgroundColor: '#2d6a35',
+            width: `${((5 - counting) / 5) * 100}%`
+          }}
+        />
+      </div>
+
       <button
-        onClick={() => navigate('/')}
+        onClick={() => window.location.href = '/'}
         className="w-full max-w-sm text-white font-bold py-4 rounded-2xl transition"
         style={{ backgroundColor: '#2d6a35' }}
       >

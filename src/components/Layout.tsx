@@ -2,7 +2,8 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import AlertPopup from './AlertPopup'
 import Chatbot from './Chatbot'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 
 const navItems = [
   { to: '/', icon: '🏡', label: 'Huerto' },
@@ -12,15 +13,37 @@ const navItems = [
   { to: '/configuracion', icon: '⚙️', label: 'Config' },
 ]
 
-
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { signOut } = useAuth()
+  const { signOut, user } = useAuth()
   const navigate = useNavigate()
   const [showChat, setShowChat] = useState(false)
+  const [isPremium, setIsPremium] = useState(false)
+
+  useEffect(() => {
+    if (!user) return
+    checkPremium()
+  }, [user])
+
+  const checkPremium = async () => {
+    const { data } = await supabase
+      .from('user_settings')
+      .select('is_premium')
+      .eq('id', user!.id)
+      .single()
+    setIsPremium(data?.is_premium ?? false)
+  }
 
   const handleSignOut = async () => {
     await signOut()
     navigate('/')
+  }
+
+  const handleChatClick = () => {
+    if (!isPremium) {
+      alert('🔒 El asistente IA es exclusivo para usuarios Premium. ¡Actualiza tu plan!')
+      return
+    }
+    setShowChat(true)
   }
 
   return (
@@ -37,13 +60,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* BOTÓN CHATBOT */}
           <button
-            onClick={() => setShowChat(true)}
-            className="transition hover:scale-110 text-xl"
-            title="Asistente IA"
+            onClick={handleChatClick}
+            className="transition hover:scale-110 text-xl relative"
+            title={isPremium ? 'Asistente IA' : 'Solo Premium'}
           >
             🤖
+            {!isPremium && (
+              <span className="absolute -top-1 -right-1 text-xs">🔒</span>
+            )}
           </button>
           <button
             onClick={handleSignOut}
@@ -86,10 +111,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </nav>
 
-      {/* CHATBOT */}
       {showChat && <Chatbot onClose={() => setShowChat(false)} />}
-
-      {/* ALERTA EMERGENTE */}
       <AlertPopup />
 
     </div>
