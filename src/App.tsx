@@ -1,5 +1,7 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './hooks/useAuth'
+import { useEffect } from 'react'
+import { App as CapApp } from '@capacitor/app'
 import Login from './pages/Login'
 import Layout from './components/Layout'
 import MiHuerto from './pages/MiHuerto'
@@ -13,9 +15,32 @@ import Configuracion from './pages/Configuracion'
 import Dashboard from './pages/Dashboard'
 import Success from './pages/Success'
 import Perfil from './pages/Perfil'
+import ResetPassword from './pages/ResetPassword'
+
 
 function AppRoutes() {
   const { user, loading } = useAuth()
+  const navigate = useNavigate()
+
+  // Deep link handler para APK
+  useEffect(() => {
+    CapApp.addListener('appUrlOpen', (data) => {
+      const url = data.url
+      if (url.includes('reset-password') || url.includes('type=recovery')) {
+        const hash = url.includes('#') ? '#' + url.split('#')[1] : ''
+        window.location.href = '/reset-password' + hash
+      }
+      if (url.includes('success') && url.includes('user_id')) {
+        const params = url.split('?')[1] ?? ''
+        navigate(`/success?${params}`)
+        
+      }
+    })
+
+    return () => {
+      CapApp.removeAllListeners()
+    }
+  }, [])
 
   if (loading) {
     return (
@@ -33,9 +58,13 @@ function AppRoutes() {
     )
   }
 
-  // Página de éxito accesible sin Layout
+  // Páginas sin Layout
   if (window.location.pathname === '/success') {
     return <Success />
+  }
+
+  if (window.location.pathname === '/reset-password') {
+    return <ResetPassword />
   }
 
   if (!user) return <Login />
@@ -52,8 +81,8 @@ function AppRoutes() {
         <Route path="/simulador" element={<Simulador />} />
         <Route path="/configuracion" element={<Configuracion />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="*" element={<Navigate to="/" />} />
         <Route path="/perfil" element={<Perfil />} />
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Layout>
   )

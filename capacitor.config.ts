@@ -1,9 +1,17 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
   appId: 'com.mihuerto.app',
   appName: 'Mi Huerto',
-  webDir: 'dist'
-};
+  webDir: 'dist',
+  server: {
+    androidScheme: 'https'
+  },
+  plugins: {
+    App: {
+      launchUrl: 'com.mihuerto.app://'
+    }
+  }
+}
 
-export default config;
+export default config

@@ -82,8 +82,14 @@ export default function Login() {
       setLoading(false)
       return
     }
+    // Detectar si es APK o web
+    const isNative = window.location.protocol === 'capacitor:'
+    const redirectUrl = isNative
+      ? 'com.mihuerto.app://reset-password'
+      : `${window.location.origin}/reset-password`
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: redirectUrl,
     })
     if (error) setError(error.message)
     else setSuccessMsg('✅ Revisa tu correo para restablecer tu contraseña')

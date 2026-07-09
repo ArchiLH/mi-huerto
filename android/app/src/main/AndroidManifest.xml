@@ -17,9 +17,28 @@
             android:launchMode="singleTask"
             android:exported="true">
 
+            <!-- LAUNCHER -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- DEEP LINK: com.mihuerto.app:// -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="com.mihuerto.app" />
+            </intent-filter>
+
+            <!-- DEEP LINK: https://mi-huerto-green.vercel.app -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="mi-huerto-green.vercel.app" />
             </intent-filter>
 
         </activity>
@@ -36,6 +55,6 @@
     </application>
 
     <!-- Permissions -->
-
     <uses-permission android:name="android.permission.INTERNET" />
+
 </manifest>
