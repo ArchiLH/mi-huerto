@@ -78,6 +78,7 @@ Contexto actual del huerto del usuario:
 ${plantContext}`
 
     try {
+      console.log("GROQ KEY:", import.meta.env.VITE_GROQ_API_KEY)
       const response = await fetch(
         'https://api.groq.com/openai/v1/chat/completions',
         {
