@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { handlePurchase } from '../lib/stripe'
 
 const FREE_LIMIT = 4
 const PREMIUM_LIMIT = 8
@@ -116,18 +117,17 @@ function LockedSpaceCard() {
 export default function MiHuerto() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  
+
   const [spaces, setSpaces] = useState<Space[]>([])
   const [isPremium, setIsPremium] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showUpgrade, setShowUpgrade] = useState(false)
   const [isUpgrading, setIsUpgrading] = useState(false)
-  
+
   const initialized = useRef(false)
 
   useEffect(() => {
     if (!user) return
-
     if (!initialized.current) {
       initialized.current = true
       loadData()
@@ -138,7 +138,6 @@ export default function MiHuerto() {
     if (!user) return
 
     try {
-      // 1. Cargar plan del usuario
       const { data: settings } = await supabase
         .from('user_settings')
         .select('is_premium')
@@ -148,7 +147,6 @@ export default function MiHuerto() {
       const premium = settings?.is_premium ?? false
       setIsPremium(premium)
 
-      // 2. Cargar espacios
       let { data, error } = await supabase
         .from('spaces')
         .select(`*, plant_catalog (name, emoji), sensors (id, active)`)
@@ -157,7 +155,6 @@ export default function MiHuerto() {
 
       if (error) throw error
 
-      // Si no existen espacios asignados al usuario, los inicializamos
       if (!data || data.length === 0) {
         const defaultSpaces = Array.from({ length: PREMIUM_LIMIT }, (_, i) => ({
           user_id: user.id,
@@ -165,20 +162,19 @@ export default function MiHuerto() {
           name: `Espacio ${i + 1}`,
           plant_id: null,
         }))
-        
+
         await supabase.from('spaces').insert(defaultSpaces)
-        
+
         const { data: newData, error: newError } = await supabase
           .from('spaces')
           .select(`*, plant_catalog (name, emoji), sensors (id, active)`)
           .eq('user_id', user.id)
           .order('slot_number')
-          
+
         if (newError) throw newError
         data = newData
       }
 
-      // 3. Enriquecer los espacios con alertas y lecturas asíncronas
       const enriched = await Promise.all(
         (data as Space[]).map(async (space) => {
           if (!space.sensors || space.sensors.length === 0) return space
@@ -198,10 +194,10 @@ export default function MiHuerto() {
             .eq('sensor_id', sensorId)
             .eq('acknowledged', false)
 
-          return { 
-            ...space, 
-            latest_reading: reading ?? null, 
-            unacknowledged_alerts: count ?? 0 
+          return {
+            ...space,
+            latest_reading: reading ?? null,
+            unacknowledged_alerts: count ?? 0
           }
         })
       )
@@ -216,46 +212,19 @@ export default function MiHuerto() {
 
   const handleUpgrade = async () => {
     if (!user || isUpgrading) return
+    setIsUpgrading(true)
 
     try {
-      setIsUpgrading(true)
+      const result = await handlePurchase(user.id, user.email ?? '')
 
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        alert("Tu sesión ha expirado. Por favor, vuelve a iniciar sesión.")
-        return
-      }
-
-      const response = await fetch(
-        'https://fdayefjmebnsrxbkuetq.supabase.co/functions/v1/create-checkout',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '', 
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            user_id: user.id,
-            email: user.email || '',
-          }),
-        }
-      )
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || `Error del servidor (${response.status})`)
-      }
-
-      const { url } = await response.json()
-      if (url) {
-        window.open(url, '_blank')
-      } else {
-        throw new Error("No se recibió la URL de redirección")
+      if (result.success) {
+        setIsPremium(true)
+        setShowUpgrade(false)
+        alert('¡Bienvenido a Premium! 🎉')
       }
     } catch (error: any) {
-      console.error("Error detallado en el checkout:", error)
-      alert(`No se pudo procesar el pago: ${error.message}`)
+      console.error('Error en el checkout:', error)
+      alert('Error al procesar el pago: ' + error.message)
     } finally {
       setIsUpgrading(false)
     }
@@ -351,11 +320,14 @@ export default function MiHuerto() {
       {/* MODAL UPGRADE */}
       {showUpgrade && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center p-4">
-          <div className="bg-slate-900 rounded-2xl w-full max-w-sm p-6 space-y-4">
+          <div
+            className="rounded-2xl w-full max-w-sm p-6 space-y-4"
+            style={{ backgroundColor: '#0f2317', border: '1px solid #1a3a20' }}
+          >
             <div className="text-center">
               <p className="text-5xl mb-3">⭐</p>
-              <h2 className="text-xl font-bold">Desbloquea Premium</h2>
-              <p className="text-slate-400 text-sm mt-1">
+              <h2 className="text-xl font-bold text-white">Desbloquea Premium</h2>
+              <p className="text-sm mt-1" style={{ color: '#6b9e6e' }}>
                 Accede a todos los espacios de tu huerto
               </p>
             </div>
@@ -366,6 +338,7 @@ export default function MiHuerto() {
                 '📡 Sensores ilimitados',
                 '📊 Historial completo',
                 '🔔 Alertas en Telegram',
+                '🤖 Asistente IA HuertoBot',
                 '🧪 Simulador avanzado',
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm text-slate-300">
@@ -375,27 +348,30 @@ export default function MiHuerto() {
               ))}
             </div>
 
-            <div className="bg-slate-800 rounded-xl p-4 text-center">
+            <div
+              className="rounded-xl p-4 text-center"
+              style={{ backgroundColor: '#0a1a0f' }}
+            >
               <p className="text-xs text-slate-400 mb-1">Incluido con la compra del sensor</p>
               <p className="text-2xl font-bold text-amber-400">Kit Mi Huerto</p>
-              <p className="text-xs text-slate-400 mt-1">Actívate automáticamente al registrar tu sensor</p>
+              <p className="text-xs text-slate-400 mt-1">
+                Actívate automáticamente al registrar tu sensor
+              </p>
             </div>
 
             <button
               onClick={handleUpgrade}
               disabled={isUpgrading}
-              className={`w-full text-white font-bold py-3 rounded-xl transition text-sm ${
-                isUpgrading ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'
-              }`}
+              className="w-full text-white font-bold py-3 rounded-xl transition text-sm disabled:opacity-50"
               style={{ backgroundColor: '#2d6a35' }}
             >
-              {isUpgrading ? '⏳ Cargando checkout...' : '🛒 Comprar Kit Premium'}
+              {isUpgrading ? '⏳ Procesando...' : '🛒 Comprar Kit Premium'}
             </button>
-            
+
             <button
               onClick={() => setShowUpgrade(false)}
-              className="w-full py-3 rounded-xl transition text-sm hover:opacity-90"
-              style={{ backgroundColor: '#0f2317', color: '#6b9e6e' }}
+              className="w-full py-3 rounded-xl transition text-sm"
+              style={{ backgroundColor: '#0a1a0f', color: '#6b9e6e', border: '1px solid #1a3a20' }}
             >
               Cerrar
             </button>

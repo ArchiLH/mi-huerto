@@ -1,78 +1,316 @@
-import Stripe from 'https://esm.sh/stripe@14.21.0'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import Stripe from "https://esm.sh/stripe@14.21.0"
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
-  apiVersion: '2023-10-16',
-})
+import {
+ createClient
+} from "https://esm.sh/@supabase/supabase-js@2"
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+
+
+const stripe =
+new Stripe(
+
+ Deno.env.get(
+  "STRIPE_SECRET_KEY"
+ )!,
+
+ {
+  apiVersion:"2023-10-16"
+ }
+
+)
+
+
+
+const supabase =
+createClient(
+
+ Deno.env.get(
+  "SUPABASE_URL"
+ )!,
+
+ Deno.env.get(
+  "SUPABASE_SERVICE_ROLE_KEY"
+ )!
+
+)
+
+
+
+
+Deno.serve(async(req)=>{
+
+
+const signature =
+req.headers.get(
+ "stripe-signature"
+)
+
+
+
+const body =
+await req.text()
+
+
+
+let event:Stripe.Event
+
+
+
+try{
+
+
+event =
+stripe.webhooks.constructEvent(
+
+ body,
+
+ signature!,
+
+ Deno.env.get(
+  "STRIPE_WEBHOOK_SECRET"
+ )!
+
+)
+
+
+
+}catch(error){
+
+
+return new Response(
+
+"Webhook inválido",
+
+{
+status:400
 }
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+)
 
-  const signature = req.headers.get('stripe-signature')!
-  const body = await req.text()
+}
 
-  let event: Stripe.Event
 
-  try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      Deno.env.get('STRIPE_WEBHOOK_SECRET')!
-    )
-  } catch {
-    return new Response('Webhook error', { status: 400 })
-  }
 
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  )
 
-  // Pago único completado
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as Stripe.CheckoutSession
-    const user_id = session.metadata?.user_id
 
-    if (user_id) {
-      await supabase
-        .from('user_settings')
-        .upsert({ id: user_id, is_premium: true })
-    }
-  }
+// CREAR O ACTUALIZAR SUSCRIPCIÓN
 
-  // Suscripción activa
-  if (event.type === 'customer.subscription.created' ||
-      event.type === 'customer.subscription.updated') {
-    const subscription = event.data.object as Stripe.Subscription
-    const user_id = subscription.metadata?.user_id
+if(
 
-    if (user_id && subscription.status === 'active') {
-      await supabase
-        .from('user_settings')
-        .upsert({ id: user_id, is_premium: true })
-    }
-  }
+event.type ===
+"customer.subscription.created"
 
-  // Suscripción cancelada
-  if (event.type === 'customer.subscription.deleted') {
-    const subscription = event.data.object as Stripe.Subscription
-    const user_id = subscription.metadata?.user_id
+||
 
-    if (user_id) {
-      await supabase
-        .from('user_settings')
-        .upsert({ id: user_id, is_premium: false })
-    }
-  }
+event.type ===
+"customer.subscription.updated"
 
-  return new Response(JSON.stringify({ received: true }), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-  })
+){
+
+
+
+const subscription =
+event.data.object
+as Stripe.Subscription
+
+
+
+
+const user_id =
+subscription.metadata.user_id
+
+
+
+
+if(user_id){
+
+
+
+await supabase
+
+.from(
+ "user_settings"
+)
+
+.upsert({
+
+
+id:user_id,
+
+
+is_premium:
+subscription.status === "active",
+
+
+
+stripe_customer_id:
+subscription.customer,
+
+
+
+stripe_subscription_id:
+subscription.id,
+
+
+
+subscription_status:
+subscription.status,
+
+
+
+subscription_end:
+
+new Date(
+
+subscription.current_period_end
+*1000
+
+)
+.toISOString()
+
+
+
+})
+
+
+
+}
+
+
+
+}
+
+
+
+
+
+
+// CANCELACIÓN
+
+if(
+
+event.type ===
+"customer.subscription.deleted"
+
+){
+
+
+const subscription =
+event.data.object
+as Stripe.Subscription
+
+
+
+const user_id =
+subscription.metadata.user_id
+
+
+
+
+if(user_id){
+
+
+await supabase
+
+.from(
+ "user_settings"
+)
+
+.update({
+
+is_premium:false,
+
+subscription_status:
+"canceled"
+
+})
+
+.eq(
+"id",
+user_id
+)
+
+
+}
+
+
+}
+
+
+
+
+// PAGO FALLIDO
+
+if(
+
+event.type ===
+"invoice.payment_failed"
+
+){
+
+
+const invoice =
+event.data.object
+as Stripe.Invoice
+
+
+
+const subscriptionId =
+invoice.subscription
+
+
+
+if(subscriptionId){
+
+
+
+await supabase
+
+.from(
+"user_settings"
+)
+
+.update({
+
+subscription_status:
+"past_due"
+
+})
+
+.eq(
+"stripe_subscription_id",
+subscriptionId
+)
+
+
+}
+
+
+
+}
+
+
+
+return new Response(
+
+JSON.stringify({
+
+received:true
+
+}),
+
+{
+
+headers:{
+
+"Content-Type":
+"application/json"
+
+}
+
+}
+
+)
+
+
 })
