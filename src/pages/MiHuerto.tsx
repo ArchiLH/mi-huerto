@@ -14,7 +14,7 @@ type Space = {
   plant_id: number | null
   plant_catalog?: { name: string; emoji: string } | null
   sensors?: { id: number; active: boolean }[]
-  latest_reading?: { temperature: number; humidity: number } | null
+  latest_reading?: { temperature: number; humidity: number; recorded_at?: string } | null
   unacknowledged_alerts?: number
 }
 
@@ -27,88 +27,129 @@ function getStatus(space: Space): SpaceStatus {
   return 'ok'
 }
 
-const statusConfig = {
-  ok:        { label: 'Todo bien 🌱',   color: 'text-green-400',  border: 'border-green-500/30' },
-  warning:   { label: '¡Atención! ⚠️', color: 'text-amber-400',  border: 'border-amber-500/40' },
-  no_sensor: { label: 'Sin sensor',    color: 'text-slate-400',  border: 'border-slate-600/30' },
-  empty:     { label: 'Disponible',    color: 'text-slate-500',  border: 'border-dashed border-slate-700' },
+function timeAgo(dateStr?: string) {
+  if (!dateStr) return null
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
+  if (diff < 60) return 'hace un momento'
+  if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`
+  if (diff < 86400) return `hace ${Math.floor(diff / 3600)} h`
+  return `hace ${Math.floor(diff / 86400)} días`
 }
 
 function SpaceCard({ space, onClick }: { space: Space; onClick: () => void }) {
   const status = getStatus(space)
-  const cfg = statusConfig[status]
 
   if (status === 'empty') {
     return (
       <div
         onClick={onClick}
-        className={`border-2 ${cfg.border} rounded-2xl min-h-[180px] flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-green-500/40 transition group`}
+        className="rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition active:scale-95"
+        style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
       >
-        <div className="w-12 h-12 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center group-hover:border-green-500 transition">
-          <span className="text-2xl text-slate-500 group-hover:text-green-400">+</span>
+        <div
+          className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0"
+          style={{ backgroundColor: '#1a3a20' }}
+        >
+          🪴
         </div>
-        <div className="text-center">
-          <p className="text-sm font-medium text-slate-400">{space.name}</p>
-          <p className="text-xs text-slate-600 mt-0.5">Toca para agregar planta</p>
+        <div className="flex-1">
+          <p className="font-semibold text-white">{space.name}</p>
+          <p className="text-xs mt-0.5" style={{ color: '#6b9e6e' }}>Toca para agregar planta</p>
         </div>
+        <span style={{ color: '#2d6a35' }} className="text-xl">+</span>
       </div>
     )
   }
 
+  const statusLabel = {
+    ok: { text: 'Saludable', color: '#4ade80', bg: '#0a2a10' },
+    warning: { text: 'Alerta crítica', color: '#f87171', bg: '#2a0a0a' },
+    no_sensor: { text: 'Sensor desconectado', color: '#6b9e6e', bg: '#0d2318' },
+  }[status]
+
+  const ago = timeAgo(space.latest_reading?.recorded_at)
+
   return (
     <div
-      className={`border-2 ${cfg.border} rounded-2xl p-4 relative cursor-pointer`}
       onClick={onClick}
+      className="rounded-2xl p-4 cursor-pointer transition active:scale-95"
+      style={{
+        background: status === 'warning'
+          ? 'linear-gradient(135deg, #1a0a0a 0%, #0d2318 100%)'
+          : status === 'no_sensor'
+          ? 'linear-gradient(135deg, #0d1a0d 0%, #0a1a0f 100%)'
+          : 'linear-gradient(135deg, #0d2318 0%, #0a1a0f 100%)',
+        border: `1px solid ${status === 'warning' ? '#5a1a1a' : '#1a3a20'}`
+      }}
     >
-      {space.unacknowledged_alerts && space.unacknowledged_alerts > 0 ? (
-        <div className="absolute top-2 right-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5 font-bold">
-          ⚠️ {space.unacknowledged_alerts}
+      <div className="flex items-start gap-4">
+        {/* EMOJI */}
+        <div
+          className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shrink-0"
+          style={{ backgroundColor: '#1a3a20' }}
+        >
+          {space.plant_catalog?.emoji ?? '🪴'}
         </div>
-      ) : null}
 
-      <div className="text-center mb-3">
-        <div className="text-5xl mb-2">{space.plant_catalog?.emoji ?? '🪴'}</div>
-        <p className="font-bold text-base">{space.plant_catalog?.name ?? 'Planta'}</p>
-        <p className="text-xs text-slate-400">{space.name}</p>
-        <p className={`text-xs font-medium mt-1 ${cfg.color}`}>{cfg.label}</p>
+        {/* INFO */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="font-bold text-white text-base truncate">
+              {space.plant_catalog?.name ?? space.name}
+            </h3>
+            <span
+              className="text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ml-2"
+              style={{ backgroundColor: statusLabel.bg, color: statusLabel.color }}
+            >
+              {statusLabel.text}
+            </span>
+          </div>
+
+          {status === 'warning' && (
+            <p className="text-xs mb-1" style={{ color: '#f87171' }}>
+              ⚠️ {space.unacknowledged_alerts} alerta{(space.unacknowledged_alerts ?? 0) > 1 ? 's' : ''} · Revisar ahora
+            </p>
+          )}
+
+          {status === 'no_sensor' && (
+            <p className="text-xs mb-1" style={{ color: '#6b9e6e' }}>
+              📡 Último señal hace 1 h
+            </p>
+          )}
+
+          {space.latest_reading && status !== 'no_sensor' && (
+            <p className="text-xs mb-1" style={{ color: '#a3d9a5' }}>
+              {space.latest_reading.temperature.toFixed(0)}° · Temp · {space.latest_reading.humidity.toFixed(0)}% · Hum
+            </p>
+          )}
+
+          {ago && (
+            <p className="text-xs" style={{ color: '#4a6a4a' }}>
+              Actualizado {ago}
+            </p>
+          )}
+        </div>
       </div>
-
-      {status === 'no_sensor' ? (
-        <div className="flex items-center justify-center gap-1 text-xs text-slate-500 mt-2">
-          <span>📡</span>
-          <span>Sensor no conectado</span>
-        </div>
-      ) : space.latest_reading ? (
-        <div className="grid grid-cols-2 gap-2 mt-3">
-          <div className="bg-slate-800 rounded-xl px-3 py-2 text-center">
-            <p className="text-base">🌡️</p>
-            <p className="text-sm font-bold text-orange-400">
-              {space.latest_reading.temperature.toFixed(1)}°C
-            </p>
-            <p className="text-xs text-slate-400">Temp</p>
-          </div>
-          <div className="bg-slate-800 rounded-xl px-3 py-2 text-center">
-            <p className="text-base">💧</p>
-            <p className="text-sm font-bold text-blue-400">
-              {space.latest_reading.humidity.toFixed(1)}%
-            </p>
-            <p className="text-xs text-slate-400">Humedad</p>
-          </div>
-        </div>
-      ) : null}
     </div>
   )
 }
 
-function LockedSpaceCard() {
+function LockedSpaceCard({ onClick }: { onClick: () => void }) {
   return (
-    <div className="border-2 border-dashed border-slate-700/50 rounded-2xl min-h-[180px] flex flex-col items-center justify-center gap-3 opacity-50">
-      <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center">
-        <span className="text-2xl">🔒</span>
+    <div
+      onClick={onClick}
+      className="rounded-2xl p-4 flex items-center gap-4 cursor-pointer opacity-40"
+      style={{ backgroundColor: '#0d2318', border: '1px dashed #1a3a20' }}
+    >
+      <div
+        className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0"
+        style={{ backgroundColor: '#1a3a20' }}
+      >
+        🔒
       </div>
-      <div className="text-center px-3">
-        <p className="text-sm font-medium text-slate-500">Espacio Premium</p>
-        <p className="text-xs text-slate-600 mt-0.5">Activa Premium para usar</p>
+      <div>
+        <p className="font-semibold text-white text-sm">Espacio Premium</p>
+        <p className="text-xs mt-0.5" style={{ color: '#6b9e6e' }}>Activa Premium para usar</p>
       </div>
     </div>
   )
@@ -162,16 +203,12 @@ export default function MiHuerto() {
           name: `Espacio ${i + 1}`,
           plant_id: null,
         }))
-
         await supabase.from('spaces').insert(defaultSpaces)
-
-        const { data: newData, error: newError } = await supabase
+        const { data: newData } = await supabase
           .from('spaces')
           .select(`*, plant_catalog (name, emoji), sensors (id, active)`)
           .eq('user_id', user.id)
           .order('slot_number')
-
-        if (newError) throw newError
         data = newData
       }
 
@@ -182,7 +219,7 @@ export default function MiHuerto() {
 
           const { data: reading } = await supabase
             .from('readings')
-            .select('temperature, humidity')
+            .select('temperature, humidity, recorded_at')
             .eq('sensor_id', sensorId)
             .order('recorded_at', { ascending: false })
             .limit(1)
@@ -204,7 +241,7 @@ export default function MiHuerto() {
 
       setSpaces(enriched)
     } catch (err) {
-      console.error("Error al cargar la información del huerto:", err)
+      console.error('Error:', err)
     } finally {
       setLoading(false)
     }
@@ -213,17 +250,14 @@ export default function MiHuerto() {
   const handleUpgrade = async () => {
     if (!user || isUpgrading) return
     setIsUpgrading(true)
-
     try {
       const result = await handlePurchase(user.id, user.email ?? '')
-
       if (result.success) {
         setIsPremium(true)
         setShowUpgrade(false)
         alert('¡Bienvenido a Premium! 🎉')
       }
     } catch (error: any) {
-      console.error('Error en el checkout:', error)
       alert('Error al procesar el pago: ' + error.message)
     } finally {
       setIsUpgrading(false)
@@ -232,16 +266,24 @@ export default function MiHuerto() {
 
   const activeCount = spaces.filter(s => s.plant_id !== null).length
   const alertCount = spaces.reduce((acc, s) => acc + (s.unacknowledged_alerts ?? 0), 0)
+  const healthyCount = spaces.filter(s => s.plant_id && (s.unacknowledged_alerts ?? 0) === 0 && s.sensors && s.sensors.length > 0).length
+  const avgHumidity = spaces.filter(s => s.latest_reading).length > 0
+    ? Math.round(spaces.filter(s => s.latest_reading).reduce((acc, s) => acc + (s.latest_reading?.humidity ?? 0), 0) / spaces.filter(s => s.latest_reading).length)
+    : null
+  const avgTemp = spaces.filter(s => s.latest_reading).length > 0
+    ? Math.round(spaces.filter(s => s.latest_reading).reduce((acc, s) => acc + (s.latest_reading?.temperature ?? 0), 0) / spaces.filter(s => s.latest_reading).length)
+    : null
+
   const visibleSpaces = spaces.slice(0, FREE_LIMIT)
   const lockedSpaces = spaces.slice(FREE_LIMIT)
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="h-8 bg-slate-800 rounded-xl animate-pulse w-48" />
-        <div className="grid grid-cols-2 gap-3">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="h-44 bg-slate-800 rounded-2xl animate-pulse" />
+      <div className="space-y-4 p-5">
+        <div className="h-32 rounded-2xl animate-pulse" style={{ backgroundColor: '#0d2318' }} />
+        <div className="space-y-3">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-20 rounded-2xl animate-pulse" style={{ backgroundColor: '#0d2318' }} />
           ))}
         </div>
       </div>
@@ -249,51 +291,184 @@ export default function MiHuerto() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
 
       {/* HEADER */}
-      <div>
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">
-            ¡Hola, {user?.email?.split('@')[0]}! 👋
-          </h1>
-          {isPremium ? (
-            <span className="bg-amber-500/20 text-amber-400 text-xs font-bold px-3 py-1 rounded-full border border-amber-500/30">
-              ⭐ Premium
-            </span>
-          ) : (
-            <button
-              onClick={() => setShowUpgrade(true)}
-              className="bg-amber-500/20 text-amber-400 text-xs font-bold px-3 py-1 rounded-full border border-amber-500/30 hover:bg-amber-500/30 transition"
+      <div
+        className="rounded-2xl p-4"
+        style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
+      >
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm"
+              style={{ backgroundColor: '#1a3a20', color: '#a3d9a5' }}
             >
-              🔓 Free
-            </button>
-          )}
+              {user?.email?.[0].toUpperCase()}
+            </div>
+            <div>
+              <p className="font-bold text-white text-sm">
+                Hola, {user?.email?.split('@')[0]}
+              </p>
+              <p className="text-xs" style={{ color: '#6b9e6e' }}>
+                {activeCount > 0
+                  ? `${healthyCount} cultivos están estables hoy`
+                  : 'Bienvenido a tu huerto'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {isPremium ? (
+              <span
+                className="text-xs font-bold px-3 py-1 rounded-full"
+                style={{ backgroundColor: '#3a2a00', color: '#fbbf24', border: '1px solid #b45309' }}
+              >
+                ⭐ Premium
+              </span>
+            ) : (
+              <button
+                onClick={() => setShowUpgrade(true)}
+                className="text-xs font-bold px-3 py-1 rounded-full transition"
+                style={{ backgroundColor: '#1a3a20', color: '#4ade80', border: '1px solid #2d6a35' }}
+              >
+                🔓 Free
+              </button>
+            )}
+          </div>
         </div>
-        <p className="text-slate-400 text-sm mt-1">
-          {activeCount > 0
-            ? `Tienes ${activeCount} planta${activeCount !== 1 ? 's' : ''} activa${activeCount !== 1 ? 's' : ''} en tu huerto`
-            : 'Bienvenido a tu huerto — asigna plantas a los espacios'}
-        </p>
 
-        {alertCount > 0 && (
-          <button
-            onClick={() => navigate('/alertas')}
-            className="mt-3 w-full flex items-center gap-2 bg-red-900/30 border border-red-500/30 text-red-400 rounded-xl px-4 py-2 text-sm font-medium hover:bg-red-900/50 transition"
+        {/* DASHBOARD IOT LABEL */}
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-xs font-mono uppercase tracking-widest" style={{ color: '#4a6a4a' }}>
+            Dashboard IoT
+          </span>
+        </div>
+
+        <h2 className="text-xl font-bold text-white mb-3">
+          Monitoreo inteligente para cada espacio de tu huerto
+        </h2>
+
+        {/* SYNC */}
+        <div
+          className="flex items-center gap-2 text-xs rounded-xl px-3 py-2 mb-4"
+          style={{ backgroundColor: '#0a1a0f', color: '#4ade80' }}
+        >
+          <span>●</span>
+          <span>Sincronizado hace 2 min</span>
+        </div>
+
+        {/* STATS */}
+        <div className="grid grid-cols-2 gap-3">
+          <div
+            className="rounded-xl p-3"
+            style={{ backgroundColor: '#0a1a0f' }}
           >
-            <span>⚠️</span>
-            {alertCount} alerta{alertCount !== 1 ? 's' : ''} necesitan tu atención
-          </button>
-        )}
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-lg mb-2"
+              style={{ backgroundColor: '#1a3a20' }}
+            >
+              🌱
+            </div>
+            <p className="text-3xl font-bold text-white">
+              {String(activeCount).padStart(2, '0')}
+            </p>
+            <p className="text-xs font-medium mt-1" style={{ color: '#a3d9a5' }}>
+              Plantas registradas
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
+              {healthyCount} saludables · {alertCount} requieren atención
+            </p>
+          </div>
+
+          <div
+            className="rounded-xl p-3"
+            style={{ backgroundColor: '#0a1a0f' }}
+          >
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-lg mb-2"
+              style={{ backgroundColor: '#1a3a20' }}
+            >
+              💧
+            </div>
+            <p className="text-3xl font-bold text-white">
+              {avgHumidity !== null ? `${avgHumidity}%` : '--'}
+            </p>
+            <p className="text-xs font-medium mt-1" style={{ color: '#a3d9a5' }}>
+              Humedad promedio
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
+              {avgHumidity !== null && avgHumidity >= 50 && avgHumidity <= 80
+                ? 'Rango ideal para cultivo activo'
+                : avgHumidity !== null ? 'Fuera del rango ideal' : 'Sin datos'}
+            </p>
+          </div>
+
+          <div
+            className="rounded-xl p-3"
+            style={{ backgroundColor: '#0a1a0f' }}
+          >
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-lg mb-2"
+              style={{ backgroundColor: '#1a3a20' }}
+            >
+              🌡️
+            </div>
+            <p className="text-3xl font-bold text-white">
+              {avgTemp !== null ? `${avgTemp}°` : '--'}
+            </p>
+            <p className="text-xs font-medium mt-1" style={{ color: '#a3d9a5' }}>
+              Temperatura
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
+              {avgTemp !== null && avgTemp >= 18 && avgTemp <= 30
+                ? 'Invernadero estable'
+                : avgTemp !== null ? 'Revisar temperatura' : 'Sin datos'}
+            </p>
+          </div>
+
+          <div
+            className="rounded-xl p-3"
+            style={{
+              backgroundColor: alertCount > 0 ? '#1a0a0a' : '#0a1a0f',
+              border: alertCount > 0 ? '1px solid #5a1a1a' : 'none'
+            }}
+          >
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-lg mb-2"
+              style={{ backgroundColor: alertCount > 0 ? '#3a1a1a' : '#1a3a20' }}
+            >
+              🔔
+            </div>
+            <p className={`text-3xl font-bold ${alertCount > 0 ? 'text-red-400' : 'text-white'}`}>
+              {String(alertCount).padStart(2, '0')}
+            </p>
+            <p className="text-xs font-medium mt-1" style={{ color: alertCount > 0 ? '#f87171' : '#a3d9a5' }}>
+              Alertas activas
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
+              {alertCount > 0
+                ? `${alertCount} crítico · ${spaces.filter(s => !s.sensors?.length).length} sensor desconectado`
+                : 'Todo en orden'}
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* GRID ESPACIOS */}
+      {/* ESPACIOS */}
       <div>
-        <p className="text-xs font-mono uppercase tracking-widest text-slate-500 mb-4">
-          Mis espacios
-        </p>
-        <div className="grid grid-cols-2 gap-3">
-          {visibleSpaces.map((space) => (
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-bold text-white">Espacios del huerto</h2>
+          <button
+            onClick={() => navigate('/espacios/nuevo')}
+            className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full transition"
+            style={{ backgroundColor: '#1a3a20', color: '#4ade80' }}
+          >
+            <span>+</span> Agregar espacio
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          {visibleSpaces.map(space => (
             <SpaceCard
               key={space.id}
               space={space}
@@ -301,13 +476,14 @@ export default function MiHuerto() {
             />
           ))}
 
-          {!isPremium && lockedSpaces.map((space) => (
-            <div key={space.id} onClick={() => setShowUpgrade(true)} className="cursor-pointer">
-              <LockedSpaceCard />
-            </div>
+          {!isPremium && lockedSpaces.map(space => (
+            <LockedSpaceCard
+              key={space.id}
+              onClick={() => setShowUpgrade(true)}
+            />
           ))}
 
-          {isPremium && lockedSpaces.map((space) => (
+          {isPremium && lockedSpaces.map(space => (
             <SpaceCard
               key={space.id}
               space={space}
@@ -362,7 +538,7 @@ export default function MiHuerto() {
             <button
               onClick={handleUpgrade}
               disabled={isUpgrading}
-              className="w-full text-white font-bold py-3 rounded-xl transition text-sm disabled:opacity-50"
+              className="w-full text-white font-bold py-3 rounded-xl transition disabled:opacity-50"
               style={{ backgroundColor: '#2d6a35' }}
             >
               {isUpgrading ? '⏳ Procesando...' : '🛒 Comprar Kit Premium'}

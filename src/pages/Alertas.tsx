@@ -37,10 +37,11 @@ export default function Alertas() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'pending' | 'all'>('pending')
 
+  useEffect(() => { loadAlerts() }, [])
+
   const loadAlerts = async () => {
     if (!user) return
 
-    // 1. Traer espacios del usuario
     const { data: spacesData } = await supabase
       .from('spaces')
       .select('id, name, plant_catalog(name, emoji)')
@@ -50,7 +51,6 @@ export default function Alertas() {
 
     const spaceIds = spacesData.map(s => s.id)
 
-    // 2. Traer sensores de esos espacios
     const { data: sensorsData } = await supabase
       .from('sensors')
       .select('id, name, space_id')
@@ -64,16 +64,14 @@ export default function Alertas() {
 
     const sensorIds = sensorsData.map(s => s.id)
 
-    // 3. Traer alertas de esos sensores
     const { data: alertsData, error } = await supabase
       .from('alerts')
       .select('*')
       .in('sensor_id', sensorIds)
       .order('created_at', { ascending: false })
 
-    if (error) { console.error(error); setLoading(false); return }
+    if (error) { setLoading(false); return }
 
-    // 4. Enriquecer alertas con info de sensor y espacio
     const enriched = (alertsData ?? []).map(alert => {
       const sensor = sensorsData.find(s => s.id === alert.sensor_id)
       const space = spacesData.find(s => s.id === sensor?.space_id) as any
@@ -90,28 +88,15 @@ export default function Alertas() {
     setLoading(false)
   }
 
-  useEffect(() => { loadAlerts() }, [])
-
   const acknowledge = async (id: number) => {
-    await supabase
-      .from('alerts')
-      .update({ acknowledged: true })
-      .eq('id', id)
-
-    setAlerts(prev =>
-      prev.map(a => a.id === id ? { ...a, acknowledged: true } : a)
-    )
+    await supabase.from('alerts').update({ acknowledged: true }).eq('id', id)
+    setAlerts(prev => prev.map(a => a.id === id ? { ...a, acknowledged: true } : a))
   }
 
   const acknowledgeAll = async () => {
     const pendingIds = alerts.filter(a => !a.acknowledged).map(a => a.id)
     if (pendingIds.length === 0) return
-
-    await supabase
-      .from('alerts')
-      .update({ acknowledged: true })
-      .in('id', pendingIds)
-
+    await supabase.from('alerts').update({ acknowledged: true }).in('id', pendingIds)
     setAlerts(prev => prev.map(a => ({ ...a, acknowledged: true })))
   }
 
@@ -122,7 +107,7 @@ export default function Alertas() {
     return (
       <div className="space-y-3">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-28 bg-slate-800 rounded-2xl animate-pulse" />
+          <div key={i} className="h-28 rounded-2xl animate-pulse" style={{ backgroundColor: '#0d2318' }} />
         ))}
       </div>
     )
@@ -132,45 +117,64 @@ export default function Alertas() {
     <div className="space-y-5">
 
       {/* HEADER */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">🔔 Alertas</h1>
-          <p className="text-slate-400 text-sm mt-1">
-            {pending.length > 0
-              ? `Tienes ${pending.length} alerta${pending.length !== 1 ? 's' : ''} pendiente${pending.length !== 1 ? 's' : ''}`
-              : 'Todo al día ✅'}
-          </p>
+      <div
+        className="rounded-2xl p-5"
+        style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-xs font-mono uppercase tracking-widest" style={{ color: '#4a6a4a' }}>
+              Sistema de alertas
+            </span>
+            <h1 className="text-xl font-bold text-white mt-1">🔔 Alertas</h1>
+            <p className="text-sm mt-0.5" style={{ color: '#6b9e6e' }}>
+              {pending.length > 0
+                ? `${pending.length} alerta${pending.length !== 1 ? 's' : ''} pendiente${pending.length !== 1 ? 's' : ''}`
+                : 'Todo al día ✅'}
+            </p>
+          </div>
+          {pending.length > 0 && (
+            <button
+              onClick={acknowledgeAll}
+              className="text-xs px-3 py-2 rounded-xl transition"
+              style={{ backgroundColor: '#1a3a20', color: '#4ade80' }}
+            >
+              ✓ Todas
+            </button>
+          )}
         </div>
-        {pending.length > 0 && (
-          <button
-            onClick={acknowledgeAll}
-            className="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-xl transition"
-          >
-            ✓ Marcar todas
-          </button>
-        )}
       </div>
 
       {/* TABS */}
-      <div className="flex gap-2 bg-slate-900 p-1 rounded-xl">
+      <div
+        className="flex rounded-xl p-1 gap-1"
+        style={{ backgroundColor: '#0d2318' }}
+      >
         <button
           onClick={() => setTab('pending')}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
-            tab === 'pending' ? 'bg-green-600 text-white' : 'text-slate-400 hover:text-white'
-          }`}
+          className="flex-1 py-2 rounded-lg text-xs font-medium transition"
+          style={{
+            backgroundColor: tab === 'pending' ? '#2d6a35' : 'transparent',
+            color: tab === 'pending' ? 'white' : '#6b9e6e',
+          }}
         >
           Pendientes
           {pending.length > 0 && (
-            <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">
+            <span
+              className="ml-2 text-xs rounded-full px-1.5 py-0.5"
+              style={{ backgroundColor: '#f87171', color: 'white' }}
+            >
               {pending.length}
             </span>
           )}
         </button>
         <button
           onClick={() => setTab('all')}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
-            tab === 'all' ? 'bg-green-600 text-white' : 'text-slate-400 hover:text-white'
-          }`}
+          className="flex-1 py-2 rounded-lg text-xs font-medium transition"
+          style={{
+            backgroundColor: tab === 'all' ? '#2d6a35' : 'transparent',
+            color: tab === 'all' ? 'white' : '#6b9e6e',
+          }}
         >
           Todas ({alerts.length})
         </button>
@@ -178,17 +182,14 @@ export default function Alertas() {
 
       {/* LISTA */}
       {displayed.length === 0 ? (
-        <div className="bg-slate-900 rounded-2xl p-10 text-center">
-          <p className="text-4xl mb-3">
-            {tab === 'pending' ? '✅' : '📭'}
-          </p>
-          <p className="font-medium">
-            {tab === 'pending' ? '¡Todo al día!' : 'No hay alertas registradas'}
-          </p>
-          <p className="text-slate-400 text-sm mt-1">
-            {tab === 'pending'
-              ? 'No tienes alertas pendientes'
-              : 'Usa el simulador para generar alertas de prueba'}
+        <div
+          className="rounded-2xl p-10 text-center"
+          style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
+        >
+          <p className="text-4xl mb-3">✅</p>
+          <p className="font-medium text-white">¡Todo al día!</p>
+          <p className="text-sm mt-1" style={{ color: '#6b9e6e' }}>
+            {tab === 'pending' ? 'No tienes alertas pendientes' : 'No hay alertas registradas'}
           </p>
         </div>
       ) : (
@@ -196,23 +197,31 @@ export default function Alertas() {
           {displayed.map(alert => (
             <div
               key={alert.id}
-              className={`rounded-2xl p-4 border transition ${
-                !alert.acknowledged
-                  ? 'border-l-4 border-l-amber-500 border-amber-500/20 bg-amber-500/5'
-                  : 'border-slate-800 bg-slate-900 opacity-60'
-              }`}
+              className="rounded-2xl p-4 transition"
+              style={{
+                backgroundColor: !alert.acknowledged ? '#1a0808' : '#0d2318',
+                border: `1px solid ${!alert.acknowledged ? '#5a1a1a' : '#1a3a20'}`,
+                opacity: alert.acknowledged ? 0.6 : 1
+              }}
             >
               <div className="flex gap-3">
-                <div className="text-3xl shrink-0">
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0"
+                  style={{ backgroundColor: !alert.acknowledged ? '#3a1010' : '#1a3a20' }}
+                >
                   {alert.plant_emoji ?? alertTypeIcon[alert.type] ?? '⚠️'}
                 </div>
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="font-bold text-sm">
+                    <span className="font-bold text-sm text-white">
                       {alert.plant_name ?? alert.sensor_name}
                     </span>
                     {!alert.acknowledged && (
-                      <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
+                      <span
+                        className="text-xs rounded-full px-2 py-0.5"
+                        style={{ backgroundColor: '#3a1010', color: '#f87171' }}
+                      >
                         Nueva
                       </span>
                     )}
@@ -223,40 +232,42 @@ export default function Alertas() {
                   </p>
 
                   {alert.care_message && (
-                    <p className="text-sm text-slate-300 mb-2">
+                    <p className="text-xs mb-2" style={{ color: '#a3d9a5' }}>
                       💡 {alert.care_message}
                     </p>
                   )}
 
-                  <p className="text-xs text-slate-400">
-                    Valor: <span className="text-white">
+                  <div className="flex items-center gap-3 text-xs" style={{ color: '#4a6a4a' }}>
+                    <span>
                       {alert.value.toFixed(1)}{alert.type.includes('temp') ? '°C' : '%'}
                     </span>
-                    {' · '}Umbral: <span className="text-white">
-                      {alert.threshold.toFixed(1)}{alert.type.includes('temp') ? '°C' : '%'}
+                    <span>·</span>
+                    <span>📍 {alert.space_name}</span>
+                    <span>·</span>
+                    <span>
+                      {new Date(alert.created_at).toLocaleString('es-PE', {
+                        day: '2-digit', month: '2-digit',
+                        hour: '2-digit', minute: '2-digit'
+                      })}
                     </span>
-                  </p>
-
-                  <p className="text-xs text-slate-500 mt-1">
-                    📍 {alert.space_name} · {alert.sensor_name} ·{' '}
-                    {new Date(alert.created_at).toLocaleString('es-PE', {
-                      day: '2-digit', month: '2-digit',
-                      hour: '2-digit', minute: '2-digit'
-                    })}
-                  </p>
+                  </div>
                 </div>
 
                 <div className="shrink-0">
                   {!alert.acknowledged ? (
                     <button
                       onClick={() => acknowledge(alert.id)}
-                      className="bg-slate-700 hover:bg-green-600 text-white text-xs px-3 py-1.5 rounded-xl transition"
+                      className="text-xs px-3 py-1.5 rounded-xl transition"
+                      style={{ backgroundColor: '#1a3a20', color: '#4ade80' }}
                     >
                       ✓ Listo
                     </button>
                   ) : (
-                    <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded-lg">
-                      ✅ Atendida
+                    <span
+                      className="text-xs px-2 py-1 rounded-lg"
+                      style={{ backgroundColor: '#0a1a0f', color: '#4a6a4a' }}
+                    >
+                      ✅
                     </span>
                   )}
                 </div>

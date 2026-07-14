@@ -20,11 +20,7 @@ type Profile = {
 export default function Perfil() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [profile, setProfile] = useState<Profile>({
-    full_name: '',
-    birth_date: '',
-    nationality: '',
-  })
+  const [profile, setProfile] = useState<Profile>({ full_name: '', birth_date: '', nationality: '' })
   const [isPremium, setIsPremium] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -37,12 +33,8 @@ export default function Perfil() {
   const loadAll = async () => {
     if (!user) return
 
-    // Cargar perfil
     const { data: profileData } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single()
+      .from('profiles').select('*').eq('id', user.id).single()
 
     if (profileData) {
       setProfile({
@@ -52,27 +44,16 @@ export default function Perfil() {
       })
     }
 
-    // Cargar plan
     const { data: settings } = await supabase
-      .from('user_settings')
-      .select('is_premium')
-      .eq('id', user.id)
-      .single()
-
+      .from('user_settings').select('is_premium').eq('id', user.id).single()
     setIsPremium(settings?.is_premium ?? false)
 
-    // Contar plantas
     const { count } = await supabase
-      .from('spaces')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .not('plant_id', 'is', null)
-
+      .from('spaces').select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id).not('plant_id', 'is', null)
     setTotalPlants(count ?? 0)
 
-    // Fecha de registro
-    const date = new Date(user.created_at)
-    setMemberSince(date.toLocaleDateString('es-PE', {
+    setMemberSince(new Date(user.created_at).toLocaleDateString('es-PE', {
       day: '2-digit', month: 'long', year: 'numeric'
     }))
 
@@ -82,17 +63,13 @@ export default function Perfil() {
   const saveProfile = async () => {
     if (!user) return
     setSaving(true)
-
-    await supabase
-      .from('profiles')
-      .upsert({
-        id: user.id,
-        full_name: profile.full_name,
-        birth_date: profile.birth_date || null,
-        nationality: profile.nationality,
-        updated_at: new Date().toISOString(),
-      })
-
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      full_name: profile.full_name,
+      birth_date: profile.birth_date || null,
+      nationality: profile.nationality,
+      updated_at: new Date().toISOString(),
+    })
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
@@ -118,8 +95,8 @@ export default function Perfil() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="h-32 rounded-2xl animate-pulse" style={{ backgroundColor: '#0f2317' }} />
-        <div className="h-48 rounded-2xl animate-pulse" style={{ backgroundColor: '#0f2317' }} />
+        <div className="h-36 rounded-2xl animate-pulse" style={{ backgroundColor: '#0d2318' }} />
+        <div className="h-48 rounded-2xl animate-pulse" style={{ backgroundColor: '#0d2318' }} />
       </div>
     )
   }
@@ -128,62 +105,58 @@ export default function Perfil() {
     <div className="space-y-5">
 
       {/* HEADER */}
-      <div>
-        <h1 className="text-2xl font-bold">👤 Mi Perfil</h1>
-        <p className="text-sm mt-1" style={{ color: '#6b9e6e' }}>
-          Tu información personal
-        </p>
-      </div>
-
-      {/* TARJETA DE PERFIL */}
       <div
         className="rounded-2xl p-5"
-        style={{ backgroundColor: '#0f2317', border: '1px solid #1a3a20' }}
+        style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
       >
-        <div className="flex items-center gap-4">
-          {/* AVATAR */}
+        <span className="text-xs font-mono uppercase tracking-widest" style={{ color: '#4a6a4a' }}>
+          Cuenta
+        </span>
+        <h1 className="text-xl font-bold text-white mt-1">👤 Mi Perfil</h1>
+      </div>
+
+      {/* TARJETA PERFIL */}
+      <div
+        className="rounded-2xl p-5"
+        style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
+      >
+        <div className="flex items-center gap-4 mb-4">
           <div
             className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold shrink-0"
             style={{ backgroundColor: '#1a3a20', color: '#a3d9a5', border: '2px solid #2d6a35' }}
           >
             {getInitials()}
           </div>
-
-          {/* INFO */}
           <div className="flex-1 min-w-0">
             <h2 className="font-bold text-lg text-white truncate">
               {profile.full_name || user?.email?.split('@')[0]}
             </h2>
-            <p className="text-xs truncate" style={{ color: '#6b9e6e' }}>
-              {user?.email}
-            </p>
+            <p className="text-xs truncate" style={{ color: '#6b9e6e' }}>{user?.email}</p>
             <div className="flex items-center gap-2 mt-1">
               <span
                 className="text-xs px-2 py-0.5 rounded-full font-medium"
                 style={{
-                  backgroundColor: isPremium ? '#3a2a00' : '#1a3a20',
-                  color: isPremium ? '#fbbf24' : '#a3d9a5',
+                  backgroundColor: isPremium ? '#3a2a00' : '#0a2a10',
+                  color: isPremium ? '#fbbf24' : '#4ade80',
                   border: `1px solid ${isPremium ? '#b45309' : '#2d6a35'}`
                 }}
               >
                 {isPremium ? '⭐ Premium' : '🌱 Free'}
               </span>
               {getAge() && (
-                <span className="text-xs" style={{ color: '#6b9e6e' }}>
-                  {getAge()} años
-                </span>
+                <span className="text-xs" style={{ color: '#6b9e6e' }}>{getAge()} años</span>
               )}
             </div>
           </div>
         </div>
 
         {/* STATS */}
-        <div className="grid grid-cols-2 gap-3 mt-4">
+        <div className="grid grid-cols-2 gap-3">
           <div
             className="rounded-xl p-3 text-center"
             style={{ backgroundColor: '#0a1a0f' }}
           >
-            <p className="text-2xl font-bold text-green-400">{totalPlants}</p>
+            <p className="text-2xl font-bold" style={{ color: '#4ade80' }}>{totalPlants}</p>
             <p className="text-xs mt-0.5" style={{ color: '#6b9e6e' }}>Plantas activas</p>
           </div>
           <div
@@ -199,15 +172,14 @@ export default function Perfil() {
       {/* FORMULARIO */}
       <div
         className="rounded-2xl p-5 space-y-4"
-        style={{ backgroundColor: '#0f2317', border: '1px solid #1a3a20' }}
+        style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
       >
-        <h3 className="font-semibold text-white">✏️ Editar información</h3>
+        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#4a6a4a' }}>
+          ✏️ Editar información
+        </p>
 
-        {/* NOMBRE */}
         <div>
-          <label className="text-xs mb-1.5 block" style={{ color: '#6b9e6e' }}>
-            Nombre completo
-          </label>
+          <label className="text-xs mb-1.5 block" style={{ color: '#6b9e6e' }}>Nombre completo</label>
           <input
             type="text"
             placeholder="Tu nombre completo"
@@ -220,42 +192,26 @@ export default function Perfil() {
           />
         </div>
 
-        {/* FECHA DE NACIMIENTO */}
         <div>
-          <label className="text-xs mb-1.5 block" style={{ color: '#6b9e6e' }}>
-            Fecha de nacimiento
-          </label>
+          <label className="text-xs mb-1.5 block" style={{ color: '#6b9e6e' }}>Fecha de nacimiento</label>
           <input
             type="date"
             value={profile.birth_date}
             onChange={e => setProfile({ ...profile, birth_date: e.target.value })}
             className="w-full text-white rounded-xl px-4 py-3 outline-none"
-            style={{
-              backgroundColor: '#0a1a0f',
-              border: '1px solid #1a3a20',
-              colorScheme: 'dark'
-            }}
+            style={{ backgroundColor: '#0a1a0f', border: '1px solid #1a3a20', colorScheme: 'dark' }}
             onFocus={e => e.target.style.borderColor = '#4ade80'}
             onBlur={e => e.target.style.borderColor = '#1a3a20'}
           />
         </div>
 
-        {/* NACIONALIDAD */}
         <div>
-          <label className="text-xs mb-1.5 block" style={{ color: '#6b9e6e' }}>
-            Nacionalidad
-          </label>
+          <label className="text-xs mb-1.5 block" style={{ color: '#6b9e6e' }}>Nacionalidad</label>
           <select
             value={profile.nationality}
             onChange={e => setProfile({ ...profile, nationality: e.target.value })}
             className="w-full text-white rounded-xl px-4 py-3 outline-none"
-            style={{
-              backgroundColor: '#0a1a0f',
-              border: '1px solid #1a3a20',
-              colorScheme: 'dark'
-            }}
-            onFocus={e => e.target.style.borderColor = '#4ade80'}
-            onBlur={e => e.target.style.borderColor = '#1a3a20'}
+            style={{ backgroundColor: '#0a1a0f', border: '1px solid #1a3a20', colorScheme: 'dark' }}
           >
             <option value="">Selecciona tu nacionalidad</option>
             {NATIONALITIES.map(n => (
@@ -264,11 +220,10 @@ export default function Perfil() {
           </select>
         </div>
 
-        {/* GUARDAR */}
         {saved && (
           <div
             className="rounded-xl px-4 py-3 text-sm text-center"
-            style={{ backgroundColor: '#0a2a10', border: '1px solid #2d6a35', color: '#a3d9a5' }}
+            style={{ backgroundColor: '#0a2a10', border: '1px solid #2d6a35', color: '#4ade80' }}
           >
             ✅ Perfil actualizado correctamente
           </div>
@@ -284,25 +239,19 @@ export default function Perfil() {
         </button>
       </div>
 
-      {/* SEGURIDAD */}
-      <div
-        className="rounded-2xl p-5 space-y-3"
-        style={{ backgroundColor: '#0f2317', border: '1px solid #1a3a20' }}
+      {/* CONFIGURACIÓN */}
+      <button
+        onClick={() => navigate('/configuracion')}
+        className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition text-left"
+        style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
       >
-        <h3 className="font-semibold text-white">🔒 Seguridad</h3>
-        <button
-          onClick={() => navigate('/configuracion')}
-          className="w-full flex items-center gap-3 rounded-xl px-4 py-3 transition text-left"
-          style={{ backgroundColor: '#0a1a0f' }}
-        >
-          <span className="text-xl">⚙️</span>
-          <div>
-            <p className="text-sm font-medium text-white">Configuración</p>
-            <p className="text-xs" style={{ color: '#6b9e6e' }}>Telegram, sensores y más</p>
-          </div>
-          <span className="ml-auto" style={{ color: '#6b9e6e' }}>›</span>
-        </button>
-      </div>
+        <span className="text-2xl">⚙️</span>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-white">Configuración</p>
+          <p className="text-xs" style={{ color: '#6b9e6e' }}>Telegram, sensores y más</p>
+        </div>
+        <span style={{ color: '#2d6a35' }}>›</span>
+      </button>
 
     </div>
   )

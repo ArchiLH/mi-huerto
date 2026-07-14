@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import {
-  RadarChart, Radar, PolarGrid, PolarAngleAxis,
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
-  CartesianGrid, Tooltip
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis,
+  CartesianGrid, Tooltip, BarChart, Bar
 } from 'recharts'
 
 type SpaceStat = {
@@ -33,13 +32,13 @@ export default function Dashboard() {
   const [stats, setStats] = useState<GlobalStat | null>(null)
   const [spaceStats, setSpaceStats] = useState<SpaceStat[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<'resumen' | 'plantas' | 'graficas'>('resumen')
 
   useEffect(() => { loadDashboard() }, [])
 
   const loadDashboard = async () => {
     if (!user) return
 
-    // Cargar espacios
     const { data: spaces } = await supabase
       .from('spaces')
       .select('*, plant_catalog(name, emoji), sensors(id, active)')
@@ -50,28 +49,16 @@ export default function Dashboard() {
 
     const enriched: SpaceStat[] = await Promise.all(
       spaces.map(async (space) => {
-        if (!space.plant_id) {
-          return {
-            name: space.name,
-            plant_name: '',
-            plant_emoji: '',
-            temperature: null,
-            humidity: null,
-            status: 'empty' as const,
-            alerts: 0,
-          }
+        if (!space.plant_id) return {
+          name: space.name, plant_name: '', plant_emoji: '',
+          temperature: null, humidity: null, status: 'empty' as const, alerts: 0,
         }
 
-        if (!space.sensors || space.sensors.length === 0) {
-          return {
-            name: space.name,
-            plant_name: space.plant_catalog?.name ?? '',
-            plant_emoji: space.plant_catalog?.emoji ?? '🪴',
-            temperature: null,
-            humidity: null,
-            status: 'no_sensor' as const,
-            alerts: 0,
-          }
+        if (!space.sensors || space.sensors.length === 0) return {
+          name: space.name,
+          plant_name: space.plant_catalog?.name ?? '',
+          plant_emoji: space.plant_catalog?.emoji ?? '🪴',
+          temperature: null, humidity: null, status: 'no_sensor' as const, alerts: 0,
         }
 
         const sensorId = space.sensors[0].id
@@ -98,9 +85,9 @@ export default function Dashboard() {
           plant_emoji: space.plant_catalog?.emoji ?? '🪴',
           temperature: reading?.temperature ?? null,
           humidity: reading?.humidity ?? null,
-          status: alertCount > 0 ? 'warning' : 'ok',
+          status: alertCount > 0 ? 'warning' as const : 'ok' as const,
           alerts: alertCount,
-        } as SpaceStat
+        }
       })
     )
 
@@ -111,11 +98,9 @@ export default function Dashboard() {
     setStats({
       totalPlants: withPlants.length,
       avgTemp: withData.length > 0
-        ? withData.reduce((acc, s) => acc + (s.temperature ?? 0), 0) / withData.length
-        : 0,
+        ? withData.reduce((acc, s) => acc + (s.temperature ?? 0), 0) / withData.length : 0,
       avgHumidity: withData.length > 0
-        ? withData.reduce((acc, s) => acc + (s.humidity ?? 0), 0) / withData.length
-        : 0,
+        ? withData.reduce((acc, s) => acc + (s.humidity ?? 0), 0) / withData.length : 0,
       totalAlerts: enriched.reduce((acc, s) => acc + s.alerts, 0),
       healthySpaces: enriched.filter(s => s.status === 'ok').length,
       warningSpaces: enriched.filter(s => s.status === 'warning').length,
@@ -127,199 +112,449 @@ export default function Dashboard() {
   const barData = spaceStats
     .filter(s => s.temperature !== null)
     .map(s => ({
-      name: s.plant_emoji + ' ' + s.plant_name,
-      Temperatura: s.temperature,
-      Humedad: s.humidity,
-    }))
-
-  const radarData = spaceStats
-    .filter(s => s.temperature !== null)
-    .map(s => ({
-      subject: s.plant_emoji + ' ' + s.plant_name,
+      name: s.plant_emoji,
       Temp: s.temperature,
-      Humedad: s.humidity,
+      Hum: s.humidity,
+      fullName: s.plant_name,
     }))
 
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="h-8 bg-slate-800 rounded-xl animate-pulse w-48" />
+        <div className="h-48 rounded-2xl animate-pulse" style={{ backgroundColor: '#0d2318' }} />
         <div className="grid grid-cols-2 gap-3">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-24 bg-slate-800 rounded-2xl animate-pulse" />
+            <div key={i} className="h-28 rounded-2xl animate-pulse" style={{ backgroundColor: '#0d2318' }} />
           ))}
         </div>
-        <div className="h-64 bg-slate-800 rounded-2xl animate-pulse" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
 
       {/* HEADER */}
-      <div>
-        <h1 className="text-2xl font-bold">📊 Dashboard</h1>
-        <p className="text-slate-400 text-sm mt-1">
-          Resumen general de tu huerto
+      <div
+        className="rounded-2xl p-5"
+        style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
+      >
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs font-mono uppercase tracking-widest" style={{ color: '#4a6a4a' }}>
+            Analytics IoT
+          </span>
+          <span
+            className="text-xs px-2 py-0.5 rounded-full"
+            style={{ backgroundColor: '#0a2a10', color: '#4ade80' }}
+          >
+            ● En vivo
+          </span>
+        </div>
+        <h1 className="text-xl font-bold text-white mb-1">
+          Panel de control
+        </h1>
+        <p className="text-sm" style={{ color: '#6b9e6e' }}>
+          Análisis en tiempo real de tu huerto
         </p>
       </div>
 
-      {/* STATS GLOBALES */}
-      {stats && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-900 rounded-2xl p-4">
-            <p className="text-xs text-slate-400 mb-1">🌱 Total plantas</p>
-            <p className="text-3xl font-bold">{stats.totalPlants}</p>
+      {/* TABS */}
+      <div
+        className="flex rounded-xl p-1 gap-1"
+        style={{ backgroundColor: '#0d2318' }}
+      >
+        {[
+          { key: 'resumen', label: '📊 Resumen' },
+          { key: 'plantas', label: '🌿 Plantas' },
+          { key: 'graficas', label: '📈 Gráficas' },
+        ].map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key as any)}
+            className="flex-1 py-2 rounded-lg text-xs font-medium transition"
+            style={{
+              backgroundColor: activeTab === tab.key ? '#2d6a35' : 'transparent',
+              color: activeTab === tab.key ? 'white' : '#6b9e6e',
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* TAB: RESUMEN */}
+      {activeTab === 'resumen' && stats && (
+        <div className="space-y-3">
+
+          {/* FILA 1 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div
+              className="rounded-2xl p-4"
+              style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
+            >
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
+                style={{ backgroundColor: '#1a3a20' }}
+              >
+                🌱
+              </div>
+              <p className="text-3xl font-bold text-white">
+                {String(stats.totalPlants).padStart(2, '0')}
+              </p>
+              <p className="text-xs font-medium mt-1" style={{ color: '#a3d9a5' }}>
+                Plantas activas
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
+                {stats.healthySpaces} saludables
+              </p>
+            </div>
+
+            <div
+              className="rounded-2xl p-4"
+              style={{
+                backgroundColor: stats.totalAlerts > 0 ? '#1a0808' : '#0d2318',
+                border: `1px solid ${stats.totalAlerts > 0 ? '#5a1a1a' : '#1a3a20'}`
+              }}
+            >
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
+                style={{ backgroundColor: stats.totalAlerts > 0 ? '#3a1010' : '#1a3a20' }}
+              >
+                🔔
+              </div>
+              <p className={`text-3xl font-bold ${stats.totalAlerts > 0 ? 'text-red-400' : 'text-white'}`}>
+                {String(stats.totalAlerts).padStart(2, '0')}
+              </p>
+              <p className="text-xs font-medium mt-1" style={{ color: stats.totalAlerts > 0 ? '#f87171' : '#a3d9a5' }}>
+                Alertas activas
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
+                {stats.totalAlerts > 0 ? 'Requieren atención' : 'Todo en orden'}
+              </p>
+            </div>
           </div>
-          <div className={`rounded-2xl p-4 ${stats.totalAlerts > 0 ? 'bg-red-900/30 border border-red-500/20' : 'bg-slate-900'}`}>
-            <p className="text-xs text-slate-400 mb-1">🔔 Alertas activas</p>
-            <p className={`text-3xl font-bold ${stats.totalAlerts > 0 ? 'text-red-400' : 'text-white'}`}>
-              {stats.totalAlerts}
-            </p>
+
+          {/* FILA 2 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div
+              className="rounded-2xl p-4"
+              style={{
+                backgroundColor: stats.avgTemp > 35 ? '#1a0808' : '#0d2318',
+                border: `1px solid ${stats.avgTemp > 35 ? '#5a1a1a' : '#1a3a20'}`
+              }}
+            >
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
+                style={{ backgroundColor: '#1a3a20' }}
+              >
+                🌡️
+              </div>
+              <p className={`text-3xl font-bold ${stats.avgTemp > 35 ? 'text-red-400' : 'text-white'}`}>
+                {stats.avgTemp.toFixed(0)}°
+              </p>
+              <p className="text-xs font-medium mt-1" style={{ color: '#a3d9a5' }}>
+                Temperatura prom.
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
+                {stats.avgTemp >= 18 && stats.avgTemp <= 30 ? 'Rango ideal' : 'Fuera de rango'}
+              </p>
+            </div>
+
+            <div
+              className="rounded-2xl p-4"
+              style={{
+                backgroundColor: stats.avgHumidity < 30 ? '#1a1208' : '#0d2318',
+                border: `1px solid ${stats.avgHumidity < 30 ? '#5a3a10' : '#1a3a20'}`
+              }}
+            >
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
+                style={{ backgroundColor: '#1a3a20' }}
+              >
+                💧
+              </div>
+              <p className={`text-3xl font-bold ${stats.avgHumidity < 30 ? 'text-yellow-400' : 'text-white'}`}>
+                {stats.avgHumidity.toFixed(0)}%
+              </p>
+              <p className="text-xs font-medium mt-1" style={{ color: '#a3d9a5' }}>
+                Humedad prom.
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
+                {stats.avgHumidity >= 50 && stats.avgHumidity <= 80 ? 'Nivel óptimo' : 'Revisar riego'}
+              </p>
+            </div>
           </div>
-          <div className={`rounded-2xl p-4 ${stats.avgTemp > 35 ? 'bg-red-900/30' : 'bg-slate-900'}`}>
-            <p className="text-xs text-slate-400 mb-1">🌡️ Temp. promedio</p>
-            <p className={`text-3xl font-bold ${stats.avgTemp > 35 ? 'text-red-400' : 'text-orange-400'}`}>
-              {stats.avgTemp.toFixed(1)}°C
-            </p>
+
+          {/* FILA 3 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div
+              className="rounded-2xl p-4"
+              style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
+            >
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
+                style={{ backgroundColor: '#1a3a20' }}
+              >
+                ✅
+              </div>
+              <p className="text-3xl font-bold text-green-400">
+                {String(stats.healthySpaces).padStart(2, '0')}
+              </p>
+              <p className="text-xs font-medium mt-1" style={{ color: '#a3d9a5' }}>
+                Espacios ok
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
+                Funcionando bien
+              </p>
+            </div>
+
+            <div
+              className="rounded-2xl p-4"
+              style={{
+                backgroundColor: stats.warningSpaces > 0 ? '#1a1208' : '#0d2318',
+                border: `1px solid ${stats.warningSpaces > 0 ? '#5a3a10' : '#1a3a20'}`
+              }}
+            >
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
+                style={{ backgroundColor: stats.warningSpaces > 0 ? '#3a2a10' : '#1a3a20' }}
+              >
+                ⚠️
+              </div>
+              <p className={`text-3xl font-bold ${stats.warningSpaces > 0 ? 'text-amber-400' : 'text-white'}`}>
+                {String(stats.warningSpaces).padStart(2, '0')}
+              </p>
+              <p className="text-xs font-medium mt-1" style={{ color: '#a3d9a5' }}>
+                Con alertas
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
+                {stats.warningSpaces > 0 ? 'Requieren revisión' : 'Sin problemas'}
+              </p>
+            </div>
           </div>
-          <div className={`rounded-2xl p-4 ${stats.avgHumidity < 30 ? 'bg-yellow-900/30' : 'bg-slate-900'}`}>
-            <p className="text-xs text-slate-400 mb-1">💧 Hum. promedio</p>
-            <p className={`text-3xl font-bold ${stats.avgHumidity < 30 ? 'text-yellow-400' : 'text-blue-400'}`}>
-              {stats.avgHumidity.toFixed(1)}%
-            </p>
-          </div>
-          <div className="bg-slate-900 rounded-2xl p-4">
-            <p className="text-xs text-slate-400 mb-1">✅ Espacios ok</p>
-            <p className="text-3xl font-bold text-green-400">{stats.healthySpaces}</p>
-          </div>
-          <div className={`rounded-2xl p-4 ${stats.warningSpaces > 0 ? 'bg-amber-900/30' : 'bg-slate-900'}`}>
-            <p className="text-xs text-slate-400 mb-1">⚠️ Con alertas</p>
-            <p className={`text-3xl font-bold ${stats.warningSpaces > 0 ? 'text-amber-400' : 'text-white'}`}>
-              {stats.warningSpaces}
-            </p>
-          </div>
+
+          {/* BOTÓN ALERTAS */}
+          {stats.totalAlerts > 0 && (
+            <button
+              onClick={() => navigate('/alertas')}
+              className="w-full py-3 rounded-2xl text-sm font-medium transition"
+              style={{
+                backgroundColor: '#1a0808',
+                border: '1px solid #5a1a1a',
+                color: '#f87171'
+              }}
+            >
+              ⚠️ Ver {stats.totalAlerts} alerta{stats.totalAlerts !== 1 ? 's' : ''} pendiente{stats.totalAlerts !== 1 ? 's' : ''}
+            </button>
+          )}
         </div>
       )}
 
-      {/* ESTADO POR ESPACIO */}
-      {spaceStats.filter(s => s.plant_name !== '').length > 0 && (
-        <div className="bg-slate-900 rounded-2xl p-4">
-          <h2 className="font-semibold text-sm text-slate-300 mb-3">
-            🌿 Estado por planta
-          </h2>
-          <div className="space-y-3">
-            {spaceStats
-              .filter(s => s.plant_name !== '')
-              .map((s, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <span className="text-2xl">{s.plant_emoji}</span>
-                  <div className="flex-1">
+      {/* TAB: PLANTAS */}
+      {activeTab === 'plantas' && (
+        <div className="space-y-3">
+          {spaceStats.filter(s => s.plant_name !== '').length === 0 ? (
+            <div
+              className="rounded-2xl p-10 text-center"
+              style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
+            >
+              <p className="text-4xl mb-3">🌱</p>
+              <p style={{ color: '#6b9e6e' }}>No tienes plantas registradas</p>
+              <button
+                onClick={() => navigate('/')}
+                className="mt-3 text-sm"
+                style={{ color: '#4ade80' }}
+              >
+                Ir a Mi Huerto
+              </button>
+            </div>
+          ) : (
+            spaceStats.filter(s => s.plant_name !== '').map((s, i) => (
+              <div
+                key={i}
+                className="rounded-2xl p-4"
+                style={{
+                  backgroundColor: s.status === 'warning' ? '#1a0808' : '#0d2318',
+                  border: `1px solid ${s.status === 'warning' ? '#5a1a1a' : '#1a3a20'}`
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0"
+                    style={{ backgroundColor: '#1a3a20' }}
+                  >
+                    {s.plant_emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <p className="text-sm font-medium">{s.plant_name}</p>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        s.status === 'ok' ? 'bg-green-900/50 text-green-400' :
-                        s.status === 'warning' ? 'bg-amber-900/50 text-amber-400' :
-                        'bg-slate-800 text-slate-400'
-                      }`}>
-                        {s.status === 'ok' ? '✅ Ok' :
-                         s.status === 'warning' ? `⚠️ ${s.alerts} alerta${s.alerts !== 1 ? 's' : ''}` :
-                         '📡 Sin sensor'}
+                      <p className="font-bold text-white truncate">{s.plant_name}</p>
+                      <span
+                        className="text-xs px-2 py-0.5 rounded-full shrink-0 ml-2"
+                        style={{
+                          backgroundColor: s.status === 'ok' ? '#0a2a10' :
+                            s.status === 'warning' ? '#2a0a0a' : '#1a2a1a',
+                          color: s.status === 'ok' ? '#4ade80' :
+                            s.status === 'warning' ? '#f87171' : '#6b9e6e'
+                        }}
+                      >
+                        {s.status === 'ok' ? '✅ Saludable' :
+                          s.status === 'warning' ? `⚠️ ${s.alerts} alerta${s.alerts !== 1 ? 's' : ''}` :
+                          '📡 Sin sensor'}
                       </span>
                     </div>
+                    <p className="text-xs mb-1" style={{ color: '#4a6a4a' }}>{s.name}</p>
                     {s.temperature !== null && (
-                      <div className="flex gap-3 text-xs text-slate-400">
-                        <span className="text-orange-400">🌡️ {s.temperature.toFixed(1)}°C</span>
-                        <span className="text-blue-400">💧 {s.humidity?.toFixed(1)}%</span>
-                        <span className="text-slate-500">{s.name}</span>
+                      <div className="flex gap-3 text-xs">
+                        <span style={{ color: '#f97316' }}>🌡️ {s.temperature.toFixed(1)}°C</span>
+                        <span style={{ color: '#38bdf8' }}>💧 {s.humidity?.toFixed(1)}%</span>
                       </div>
                     )}
                   </div>
                 </div>
-              ))}
-          </div>
+
+                {/* BARRA DE HUMEDAD */}
+                {s.humidity !== null && (
+                  <div className="mt-3">
+                    <div className="flex justify-between text-xs mb-1" style={{ color: '#4a6a4a' }}>
+                      <span>Humedad</span>
+                      <span style={{ color: '#a3d9a5' }}>{s.humidity?.toFixed(0)}%</span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#1a3a20' }}>
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${s.humidity}%`,
+                          backgroundColor: (s.humidity ?? 0) < 30 ? '#f87171' :
+                            (s.humidity ?? 0) > 80 ? '#60a5fa' : '#4ade80'
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
         </div>
       )}
 
-      {/* GRÁFICA DE BARRAS */}
-      {barData.length > 0 && (
-        <div className="bg-slate-900 rounded-2xl p-4">
-          <h2 className="font-semibold text-sm text-slate-300 mb-4">
-            📈 Comparativa por planta
-          </h2>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={barData} margin={{ top: 5, right: 5, bottom: 40, left: -10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis
-                dataKey="name"
-                tick={{ fill: '#64748b', fontSize: 9 }}
-                angle={-35}
-                textAnchor="end"
-              />
-              <YAxis tick={{ fill: '#64748b', fontSize: 10 }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#0f172a',
-                  border: '1px solid #1e293b',
-                  borderRadius: '12px',
-                  color: 'white',
-                  fontSize: '12px'
-                }}
-              />
-              <Bar dataKey="Temperatura" fill="#f97316" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Humedad" fill="#38bdf8" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-          <div className="flex justify-center gap-4 mt-2 text-xs text-slate-400">
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-orange-400 inline-block" /> Temperatura °C
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-blue-400 inline-block" /> Humedad %
-            </span>
-          </div>
-        </div>
-      )}
+      {/* TAB: GRÁFICAS */}
+      {activeTab === 'graficas' && (
+        <div className="space-y-4">
+          {barData.length === 0 ? (
+            <div
+              className="rounded-2xl p-10 text-center"
+              style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
+            >
+              <p className="text-4xl mb-3">📊</p>
+              <p style={{ color: '#6b9e6e' }}>Sin datos para graficar</p>
+              <p className="text-xs mt-1" style={{ color: '#4a6a4a' }}>
+                Usa el simulador para generar lecturas
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* GRÁFICA TEMPERATURA */}
+              <div
+                className="rounded-2xl p-4"
+                style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-semibold text-white text-sm">🌡️ Temperatura por planta</h2>
+                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#1a3a20', color: '#6b9e6e' }}>
+                    °C
+                  </span>
+                </div>
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={barData} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1a3a20" />
+                    <XAxis dataKey="name" tick={{ fill: '#6b9e6e', fontSize: 14 }} />
+                    <YAxis tick={{ fill: '#6b9e6e', fontSize: 10 }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#0d2318',
+                        border: '1px solid #1a3a20',
+                        borderRadius: '12px',
+                        color: 'white',
+                        fontSize: '12px'
+                      }}
+                      formatter={(value, name, props) => [
+                        `${value}°C`,
+                        props.payload.fullName
+                      ]}
+                    />
+                    <Bar dataKey="Temp" fill="#f97316" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
 
-      {/* RADAR */}
-      {radarData.length >= 3 && (
-        <div className="bg-slate-900 rounded-2xl p-4">
-          <h2 className="font-semibold text-sm text-slate-300 mb-4">
-            🕸️ Radar de condiciones
-          </h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <RadarChart data={radarData}>
-              <PolarGrid stroke="#1e293b" />
-              <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 9 }} />
-              <Radar name="Temp" dataKey="Temp" stroke="#f97316" fill="#f97316" fillOpacity={0.2} />
-              <Radar name="Humedad" dataKey="Humedad" stroke="#38bdf8" fill="#38bdf8" fillOpacity={0.2} />
-            </RadarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
+              {/* GRÁFICA HUMEDAD */}
+              <div
+                className="rounded-2xl p-4"
+                style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-semibold text-white text-sm">💧 Humedad por planta</h2>
+                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#1a3a20', color: '#6b9e6e' }}>
+                    %
+                  </span>
+                </div>
+                <ResponsiveContainer width="100%" height={180}>
+                  <AreaChart data={barData} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
+                    <defs>
+                      <linearGradient id="humGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#38bdf8" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1a3a20" />
+                    <XAxis dataKey="name" tick={{ fill: '#6b9e6e', fontSize: 14 }} />
+                    <YAxis tick={{ fill: '#6b9e6e', fontSize: 10 }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#0d2318',
+                        border: '1px solid #1a3a20',
+                        borderRadius: '12px',
+                        color: 'white',
+                        fontSize: '12px'
+                      }}
+                      formatter={(value, name, props) => [
+                        `${value}%`,
+                        props.payload.fullName
+                      ]}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="Hum"
+                      stroke="#38bdf8"
+                      fill="url(#humGradient)"
+                      strokeWidth={2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
 
-      {/* BOTÓN VER ALERTAS */}
-      {stats && stats.totalAlerts > 0 && (
-        <button
-          onClick={() => navigate('/alertas')}
-          className="w-full bg-red-900/30 hover:bg-red-900/50 border border-red-500/30 text-red-400 py-3 rounded-2xl transition text-sm font-medium"
-        >
-          ⚠️ Ver {stats.totalAlerts} alerta{stats.totalAlerts !== 1 ? 's' : ''} pendiente{stats.totalAlerts !== 1 ? 's' : ''}
-        </button>
-      )}
-
-      {/* EMPTY STATE */}
-      {spaceStats.filter(s => s.plant_name !== '').length === 0 && (
-        <div className="bg-slate-900 rounded-2xl p-10 text-center">
-          <p className="text-4xl mb-3">🌱</p>
-          <p className="text-slate-400">Aún no tienes plantas registradas</p>
-          <button
-            onClick={() => navigate('/')}
-            className="mt-3 text-green-400 text-sm"
-          >
-            Ir a Mi Huerto
-          </button>
+              {/* LEYENDA */}
+              <div
+                className="rounded-2xl p-4"
+                style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
+              >
+                <p className="text-xs font-semibold mb-3" style={{ color: '#6b9e6e' }}>
+                  📋 Referencias
+                </p>
+                <div className="space-y-2">
+                  {barData.map((d, i) => (
+                    <div key={i} className="flex items-center justify-between text-xs">
+                      <span className="text-white">{d.name} {d.fullName}</span>
+                      <div className="flex gap-3">
+                        <span style={{ color: '#f97316' }}>🌡️ {d.Temp}°C</span>
+                        <span style={{ color: '#38bdf8' }}>💧 {d.Hum}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 

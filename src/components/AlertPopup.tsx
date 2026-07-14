@@ -20,20 +20,40 @@ const alertTypeTitle: Record<string, string> = {
 }
 
 function playAlertSound() {
-  const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
-  const notes = [440, 550, 660, 880]
-  notes.forEach((freq, i) => {
-    const osc = ctx.createOscillator()
+  const AudioContextClass =
+    window.AudioContext || (window as any).webkitAudioContext
+
+  const ctx = new AudioContextClass()
+
+  const playBeep = (
+    frequency: number,
+    start: number,
+    duration: number,
+    volume: number
+  ) => {
+    const oscillator = ctx.createOscillator()
     const gain = ctx.createGain()
-    osc.connect(gain)
+
+    oscillator.type = 'square'
+    oscillator.frequency.setValueAtTime(frequency, start)
+
+    oscillator.connect(gain)
     gain.connect(ctx.destination)
-    osc.frequency.value = freq
-    osc.type = 'sine'
-    gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.15)
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.3)
-    osc.start(ctx.currentTime + i * 0.15)
-    osc.stop(ctx.currentTime + i * 0.15 + 0.3)
-  })
+
+    gain.gain.setValueAtTime(volume, start)
+    gain.gain.exponentialRampToValueAtTime(0.001, start + duration)
+
+    oscillator.start(start)
+    oscillator.stop(start + duration)
+  }
+
+  const now = ctx.currentTime
+
+  // Meep
+  playBeep(1200, now, 0.10, 0.20)
+
+  // Meep
+  playBeep(1200, now + 0.18, 0.10, 0.20)
 }
 
 export default function AlertPopup() {
@@ -45,8 +65,11 @@ export default function AlertPopup() {
 
   useEffect(() => {
     if (!user) return
+
     checkNewAlerts()
+
     intervalRef.current = setInterval(checkNewAlerts, 30000)
+
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
@@ -75,7 +98,7 @@ export default function AlertPopup() {
 
     const sensorIds = sensors.map(s => s.id)
 
-    // Buscar alertas nuevas no reconocidas
+    // Buscar alertas nuevas
     const { data: alerts } = await supabase
       .from('alerts')
       .select('*')
@@ -94,6 +117,7 @@ export default function AlertPopup() {
 
   const dismiss = async () => {
     if (!popup) return
+
     setDismissing(true)
 
     await supabase
@@ -110,28 +134,35 @@ export default function AlertPopup() {
   if (!popup) return null
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all ${
-      dismissing ? 'opacity-0' : 'opacity-100'
-    }`}>
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all ${
+        dismissing ? 'opacity-0' : 'opacity-100'
+      }`}
+    >
       {/* OVERLAY */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={dismiss} />
+      <div
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={dismiss}
+      />
 
       {/* POPUP */}
-      <div className={`relative bg-slate-900 border-2 border-amber-500/50 rounded-3xl p-6 w-full max-w-sm shadow-2xl shadow-amber-500/20 transition-all ${
-        dismissing ? 'scale-95' : 'scale-100'
-      }`}>
-
-        {/* ICONO ALERTA */}
+      <div
+        className={`relative bg-slate-900 border-2 border-amber-500/50 rounded-3xl p-6 w-full max-w-sm shadow-2xl shadow-amber-500/20 transition-all ${
+          dismissing ? 'scale-95' : 'scale-100'
+        }`}
+      >
+        {/* ICONO */}
         <div className="flex justify-center mb-4">
           <div className="w-20 h-20 rounded-full bg-amber-500/20 border-2 border-amber-500/50 flex items-center justify-center animate-pulse">
             <span className="text-4xl">⚠️</span>
           </div>
         </div>
 
-        {/* TÍTULO */}
+        {/* TITULO */}
         <h2 className="text-xl font-bold text-center text-amber-400 mb-1">
           ¡Alerta en tu huerto!
         </h2>
+
         <p className="text-center text-white font-semibold mb-4">
           {alertTypeTitle[popup.type] ?? '⚠️ Alerta'}
         </p>
@@ -139,28 +170,42 @@ export default function AlertPopup() {
         {/* VALORES */}
         <div className="grid grid-cols-2 gap-2 mb-4">
           <div className="bg-slate-800 rounded-xl p-3 text-center">
-            <p className="text-xs text-slate-400 mb-1">Valor detectado</p>
+            <p className="text-xs text-slate-400 mb-1">
+              Valor detectado
+            </p>
+
             <p className="font-bold text-red-400 text-lg">
-              {popup.value.toFixed(1)}{popup.type.includes('temp') ? '°C' : '%'}
+              {popup.value.toFixed(1)}
+              {popup.type.includes('temp') ? '°C' : '%'}
             </p>
           </div>
+
           <div className="bg-slate-800 rounded-xl p-3 text-center">
-            <p className="text-xs text-slate-400 mb-1">Umbral normal</p>
+            <p className="text-xs text-slate-400 mb-1">
+              Umbral normal
+            </p>
+
             <p className="font-bold text-green-400 text-lg">
-              {popup.threshold.toFixed(1)}{popup.type.includes('temp') ? '°C' : '%'}
+              {popup.threshold.toFixed(1)}
+              {popup.type.includes('temp') ? '°C' : '%'}
             </p>
           </div>
         </div>
 
-        {/* RECOMENDACIÓN */}
+        {/* RECOMENDACION */}
         {popup.care_message && (
           <div className="bg-green-900/30 border border-green-500/30 rounded-xl p-4 mb-4">
-            <p className="text-xs text-green-400 font-semibold mb-1">💡 ¿Qué hacer?</p>
-            <p className="text-sm text-slate-300">{popup.care_message}</p>
+            <p className="text-xs text-green-400 font-semibold mb-1">
+              💡 ¿Qué hacer?
+            </p>
+
+            <p className="text-sm text-slate-300">
+              {popup.care_message}
+            </p>
           </div>
         )}
 
-        {/* BOTÓN */}
+        {/* BOTON */}
         <button
           onClick={dismiss}
           className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-3 rounded-xl transition text-sm"
@@ -170,8 +215,10 @@ export default function AlertPopup() {
 
         <p className="text-xs text-slate-500 text-center mt-3">
           {new Date(popup.created_at).toLocaleString('es-PE', {
-            day: '2-digit', month: '2-digit',
-            hour: '2-digit', minute: '2-digit'
+            day: '2-digit',
+            month: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
           })}
         </p>
       </div>

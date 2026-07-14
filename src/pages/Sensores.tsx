@@ -27,6 +27,8 @@ export default function Sensores() {
     min_humidity: 30, max_humidity: 80
   })
 
+  useEffect(() => { loadData() }, [])
+
   const loadData = async () => {
     if (!user) return
 
@@ -46,8 +48,6 @@ export default function Sensores() {
     setSpaces(spaceData ?? [])
     setLoading(false)
   }
-
-  useEffect(() => { loadData() }, [])
 
   const openAdd = () => {
     setEditingSensor(null)
@@ -96,7 +96,7 @@ export default function Sensores() {
   }
 
   const deleteSensor = async (id: number) => {
-    const confirm = window.confirm('¿Eliminar este sensor? También se eliminarán sus lecturas y alertas.')
+    const confirm = window.confirm('¿Eliminar este sensor?')
     if (!confirm) return
     await supabase.from('sensors').delete().eq('id', id)
     loadData()
@@ -110,72 +110,130 @@ export default function Sensores() {
   return (
     <div className="space-y-5">
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">📡 Sensores</h1>
-          <p className="text-slate-400 text-sm mt-1">Gestiona tus sensores</p>
+      {/* HEADER */}
+      <div
+        className="rounded-2xl p-5"
+        style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-xs font-mono uppercase tracking-widest" style={{ color: '#4a6a4a' }}>
+              Dispositivos IoT
+            </span>
+            <h1 className="text-xl font-bold text-white mt-1">📡 Sensores</h1>
+            <p className="text-sm mt-0.5" style={{ color: '#6b9e6e' }}>
+              {sensors.filter(s => s.active).length} activos · {sensors.length} en total
+            </p>
+          </div>
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-2 text-sm px-4 py-2 rounded-xl transition"
+            style={{ backgroundColor: '#2d6a35', color: 'white' }}
+          >
+            ➕ Nuevo
+          </button>
         </div>
-        <button
-          onClick={openAdd}
-          className="bg-green-600 hover:bg-green-500 text-white text-sm px-4 py-2 rounded-xl transition"
-        >
-          ➕ Agregar
-        </button>
       </div>
 
+      {/* LISTA */}
       {loading ? (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-24 bg-slate-800 rounded-2xl animate-pulse" />
+            <div key={i} className="h-28 rounded-2xl animate-pulse" style={{ backgroundColor: '#0d2318' }} />
           ))}
         </div>
       ) : sensors.length === 0 ? (
-        <div className="bg-slate-900 rounded-2xl p-10 text-center">
+        <div
+          className="rounded-2xl p-10 text-center"
+          style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
+        >
           <p className="text-4xl mb-3">📡</p>
-          <p className="text-slate-400">No tienes sensores aún</p>
-          <button onClick={openAdd} className="mt-3 text-green-400 text-sm">
-            Agregar primer sensor
+          <p className="font-medium text-white mb-1">No tienes sensores aún</p>
+          <p className="text-sm mb-4" style={{ color: '#6b9e6e' }}>
+            Agrega tu primer sensor para comenzar a monitorear
+          </p>
+          <button
+            onClick={openAdd}
+            className="text-sm px-5 py-2 rounded-xl"
+            style={{ backgroundColor: '#2d6a35', color: 'white' }}
+          >
+            ➕ Agregar sensor
           </button>
         </div>
       ) : (
         <div className="space-y-3">
           {sensors.map(sensor => (
-            <div key={sensor.id} className="bg-slate-900 rounded-2xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <h3 className="font-bold">{sensor.name}</h3>
-                  <p className="text-xs text-slate-400">
+            <div
+              key={sensor.id}
+              className="rounded-2xl p-4"
+              style={{
+                backgroundColor: '#0d2318',
+                border: `1px solid ${sensor.active ? '#1a3a20' : '#2a2a2a'}`
+              }}
+            >
+              {/* TOP ROW */}
+              <div className="flex items-start gap-3 mb-3">
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0"
+                  style={{ backgroundColor: sensor.active ? '#1a3a20' : '#1a1a1a' }}
+                >
+                  📡
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <h3 className="font-bold text-white truncate">{sensor.name}</h3>
+                    <button
+                      onClick={() => toggleSensor(sensor.id, sensor.active)}
+                      className="text-xs px-3 py-1 rounded-full transition shrink-0 ml-2"
+                      style={{
+                        backgroundColor: sensor.active ? '#0a2a10' : '#1a1a1a',
+                        color: sensor.active ? '#4ade80' : '#6b6b6b',
+                        border: `1px solid ${sensor.active ? '#2d6a35' : '#2a2a2a'}`
+                      }}
+                    >
+                      {sensor.active ? '● Activo' : '○ Inactivo'}
+                    </button>
+                  </div>
+                  <p className="text-xs" style={{ color: '#6b9e6e' }}>
                     📍 {sensor.spaces?.name ?? 'Sin espacio'}
                   </p>
                 </div>
-                <button
-                  onClick={() => toggleSensor(sensor.id, sensor.active)}
-                  className={`text-xs px-3 py-1.5 rounded-xl transition ${
-                    sensor.active ? 'bg-green-600 text-white' : 'bg-slate-700 text-slate-400'
-                  }`}
-                >
-                  {sensor.active ? '✅ Activo' : '⏸ Inactivo'}
-                </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-xs text-slate-400 mb-3">
-                <span>🌡️ {sensor.min_temp}° - {sensor.max_temp}°C</span>
-                <span>💧 {sensor.min_humidity}% - {sensor.max_humidity}%</span>
+              {/* RANGOS */}
+              <div
+                className="grid grid-cols-2 gap-2 rounded-xl p-3 mb-3"
+                style={{ backgroundColor: '#0a1a0f' }}
+              >
+                <div className="text-xs">
+                  <span style={{ color: '#4a6a4a' }}>Temp: </span>
+                  <span style={{ color: '#f97316' }}>
+                    {sensor.min_temp}° – {sensor.max_temp}°C
+                  </span>
+                </div>
+                <div className="text-xs">
+                  <span style={{ color: '#4a6a4a' }}>Hum: </span>
+                  <span style={{ color: '#38bdf8' }}>
+                    {sensor.min_humidity}% – {sensor.max_humidity}%
+                  </span>
+                </div>
               </div>
 
-              {/* BOTONES EDITAR Y ELIMINAR */}
+              {/* ACCIONES */}
               <div className="flex gap-2">
                 <button
                   onClick={() => openEdit(sensor)}
-                  className="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-xs py-2 rounded-xl transition"
+                  className="flex-1 py-2 rounded-xl text-xs font-medium transition"
+                  style={{ backgroundColor: '#1a3a20', color: '#4ade80' }}
                 >
-                  ✏️ Editar / Cambiar espacio
+                  ✏️ Editar
                 </button>
                 <button
                   onClick={() => deleteSensor(sensor.id)}
-                  className="bg-red-900 hover:bg-red-700 text-red-400 text-xs px-4 py-2 rounded-xl transition"
+                  className="px-4 py-2 rounded-xl text-xs font-medium transition"
+                  style={{ backgroundColor: '#1a0808', color: '#f87171' }}
                 >
-                  🗑️ Eliminar
+                  🗑️
                 </button>
               </div>
             </div>
@@ -183,68 +241,78 @@ export default function Sensores() {
         </div>
       )}
 
-      {/* MODAL AGREGAR / EDITAR */}
+      {/* MODAL */}
       {showAdd && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center p-4">
-          <div className="bg-slate-900 rounded-2xl w-full max-w-sm">
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-              <h3 className="font-semibold">
-                {editingSensor ? 'Editar sensor' : 'Nuevo sensor'}
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center p-4">
+          <div
+            className="w-full max-w-sm rounded-3xl overflow-hidden"
+            style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
+          >
+            <div
+              className="px-5 py-4 flex items-center justify-between"
+              style={{ borderBottom: '1px solid #1a3a20' }}
+            >
+              <h3 className="font-bold text-white">
+                {editingSensor ? '✏️ Editar sensor' : '📡 Nuevo sensor'}
               </h3>
-              <button onClick={() => setShowAdd(false)} className="text-slate-400 text-xl">✕</button>
+              <button
+                onClick={() => setShowAdd(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full"
+                style={{ backgroundColor: '#1a3a20', color: '#6b9e6e' }}
+              >
+                ✕
+              </button>
             </div>
-            <div className="p-4 space-y-3">
+
+            <div className="p-5 space-y-3">
               <input
                 placeholder="Nombre del sensor"
                 value={form.name}
                 onChange={e => setForm({ ...form, name: e.target.value })}
-                className="w-full bg-slate-800 text-white placeholder-slate-500 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full text-white placeholder-slate-500 rounded-xl px-4 py-3 outline-none"
+                style={{ backgroundColor: '#0a1a0f', border: '1px solid #1a3a20' }}
+                onFocus={e => e.target.style.borderColor = '#4ade80'}
+                onBlur={e => e.target.style.borderColor = '#1a3a20'}
               />
+
               <select
                 value={form.space_id}
                 onChange={e => setForm({ ...form, space_id: e.target.value })}
-                className="w-full bg-slate-800 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full text-white rounded-xl px-4 py-3 outline-none"
+                style={{ backgroundColor: '#0a1a0f', border: '1px solid #1a3a20', colorScheme: 'dark' }}
               >
                 <option value="">Seleccionar espacio</option>
                 {spaces.map(s => (
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </select>
+
               <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <p className="text-xs text-slate-400 mb-1">Temp mín °C</p>
-                  <input type="number" value={form.min_temp}
-                    onChange={e => setForm({ ...form, min_temp: Number(e.target.value) })}
-                    className="w-full bg-slate-800 text-white rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
-                  />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400 mb-1">Temp máx °C</p>
-                  <input type="number" value={form.max_temp}
-                    onChange={e => setForm({ ...form, max_temp: Number(e.target.value) })}
-                    className="w-full bg-slate-800 text-white rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
-                  />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400 mb-1">Humedad mín %</p>
-                  <input type="number" value={form.min_humidity}
-                    onChange={e => setForm({ ...form, min_humidity: Number(e.target.value) })}
-                    className="w-full bg-slate-800 text-white rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
-                  />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400 mb-1">Humedad máx %</p>
-                  <input type="number" value={form.max_humidity}
-                    onChange={e => setForm({ ...form, max_humidity: Number(e.target.value) })}
-                    className="w-full bg-slate-800 text-white rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
-                  />
-                </div>
+                {[
+                  { label: 'Temp mín °C', key: 'min_temp' },
+                  { label: 'Temp máx °C', key: 'max_temp' },
+                  { label: 'Hum mín %', key: 'min_humidity' },
+                  { label: 'Hum máx %', key: 'max_humidity' },
+                ].map(field => (
+                  <div key={field.key}>
+                    <p className="text-xs mb-1" style={{ color: '#6b9e6e' }}>{field.label}</p>
+                    <input
+                      type="number"
+                      value={form[field.key as keyof typeof form]}
+                      onChange={e => setForm({ ...form, [field.key]: Number(e.target.value) })}
+                      className="w-full text-white rounded-xl px-3 py-2 outline-none"
+                      style={{ backgroundColor: '#0a1a0f', border: '1px solid #1a3a20' }}
+                    />
+                  </div>
+                ))}
               </div>
+
               <button
                 onClick={saveSensor}
-                className="w-full bg-green-600 hover:bg-green-500 text-white font-semibold rounded-xl py-3 transition"
+                className="w-full text-white font-semibold rounded-xl py-3 transition"
+                style={{ backgroundColor: '#2d6a35' }}
               >
-                {editingSensor ? 'Guardar cambios' : 'Agregar sensor'}
+                {editingSensor ? '💾 Guardar cambios' : '➕ Agregar sensor'}
               </button>
             </div>
           </div>

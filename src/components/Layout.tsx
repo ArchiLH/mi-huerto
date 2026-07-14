@@ -21,17 +21,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!user) return
-    checkPremium()
-  }, [user])
-
-  const checkPremium = async () => {
-    const { data } = await supabase
+    supabase
       .from('user_settings')
       .select('is_premium')
-      .eq('id', user!.id)
+      .eq('id', user.id)
       .single()
+      .then(({ data }) => setIsPremium(data?.is_premium ?? false))
+  }, [user])
 
-    setIsPremium(data?.is_premium ?? false)
+  const handleChatClick = () => {
+    if (!isPremium) {
+      alert('🔒 El asistente IA es exclusivo para usuarios Premium')
+      return
+    }
+    setShowChat(true)
   }
 
   const handleSignOut = async () => {
@@ -39,63 +42,45 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     navigate('/')
   }
 
-  const handleChatClick = () => {
-    if (!isPremium) {
-      alert('🔒 El asistente IA es exclusivo para usuarios Premium. ¡Actualiza tu plan!')
-      return
-    }
-
-    setShowChat(true)
-  }
-
   return (
-    <div
-      className="min-h-screen text-white"
-      style={{ backgroundColor: '#0a1a0f' }}
-    >
+    <div className="min-h-screen text-white" style={{ backgroundColor: '#0a1a0f' }}>
+
       {/* TOP BAR */}
       <header
-        className="sticky top-0 z-10 backdrop-blur border-b px-5 py-3 flex items-center justify-between"
-        style={{
-          backgroundColor: '#0a1a0faa',
-          borderColor: '#1a3a20',
-        }}
+        className="sticky top-0 z-10 backdrop-blur px-5 py-3 flex items-center justify-between"
+        style={{ backgroundColor: '#0a1a0fcc', borderBottom: '1px solid #1a3a20' }}
       >
         <div className="flex items-center gap-2">
-          <span className="text-2xl">🌿</span>
-          <span
-            className="font-bold text-lg"
-            style={{ color: '#a3d9a5' }}
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-lg"
+            style={{ backgroundColor: '#1a3a20' }}
           >
-            Mi Huerto
-          </span>
+            🌿
+          </div>
+          <span className="font-bold" style={{ color: '#a3d9a5' }}>Mi Huerto</span>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/perfil')}
-            className="transition hover:scale-110 text-xl"
-            title="Mi perfil"
+            className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition hover:opacity-80"
+            style={{ backgroundColor: '#1a3a20', color: '#a3d9a5' }}
           >
-            👤
+            {user?.email?.[0].toUpperCase()}
           </button>
-
           <button
             onClick={handleChatClick}
-            className="transition hover:scale-110 text-xl relative"
-            title={isPremium ? 'Asistente IA' : 'Solo Premium'}
+            className="relative transition hover:scale-110 text-xl"
+            title={isPremium ? 'HuertoBot IA' : 'Solo Premium'}
           >
             🤖
             {!isPremium && (
-              <span className="absolute -top-1 -right-1 text-xs">
-                🔒
-              </span>
+              <span className="absolute -top-1 -right-1 text-xs">🔒</span>
             )}
           </button>
-
           <button
             onClick={handleSignOut}
-            className="text-sm transition"
+            className="text-xs transition"
             style={{ color: '#6b9e6e' }}
           >
             Salir
@@ -104,17 +89,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* CONTENT */}
-      <main className="p-5 pb-28 max-w-2xl mx-auto">
+      <main className="p-4 pb-28 max-w-2xl mx-auto">
         {children}
       </main>
 
       {/* BOTTOM NAV */}
       <nav
-        className="fixed bottom-0 left-0 right-0 border-t px-2 py-2"
-        style={{
-          backgroundColor: '#0f2317',
-          borderColor: '#1a3a20',
-        }}
+        className="fixed bottom-0 left-0 right-0 px-2 py-2"
+        style={{ backgroundColor: '#0d2318', borderTop: '1px solid #1a3a20' }}
       >
         <div className="flex justify-around max-w-2xl mx-auto">
           {navItems.map((item) => (
@@ -124,9 +106,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               end={item.to === '/'}
               className={({ isActive }) =>
                 `flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition text-xs ${
-                  isActive
-                    ? 'text-green-400'
-                    : 'text-slate-500 hover:text-slate-300'
+                  isActive ? 'text-green-400' : 'text-slate-500'
                 }`
               }
             >
@@ -139,6 +119,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {showChat && <Chatbot onClose={() => setShowChat(false)} />}
       <AlertPopup />
+
     </div>
   )
 }
