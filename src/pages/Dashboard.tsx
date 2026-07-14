@@ -477,7 +477,7 @@ export default function Dashboard() {
                         color: 'white',
                         fontSize: '12px'
                       }}
-                      formatter={(value, name, props) => [
+                      formatter={(value, _name, props) => [
                         `${value}°C`,
                         props.payload.fullName
                       ]}
@@ -517,7 +517,7 @@ export default function Dashboard() {
                         color: 'white',
                         fontSize: '12px'
                       }}
-                      formatter={(value, name, props) => [
+                      formatter={(value, _name, props) => [
                         `${value}%`,
                         props.payload.fullName
                       ]}
