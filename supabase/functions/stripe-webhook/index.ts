@@ -1,69 +1,49 @@
 import Stripe from "https://esm.sh/stripe@14.21.0"
-
-import {
-  createClient
-} from "https://esm.sh/@supabase/supabase-js@2"
-
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 
 const stripe = new Stripe(
-
   Deno.env.get("STRIPE_SECRET_KEY")!,
-
   {
     apiVersion: "2023-10-16"
   }
-
 )
-
 
 
 const supabase = createClient(
-
   Deno.env.get("SUPABASE_URL")!,
-
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-
 )
-
-
 
 
 
 Deno.serve(async (req)=>{
 
 
-  const signature = req.headers.get(
-    "stripe-signature"
-  )
+  const signature =
+    req.headers.get("stripe-signature")
 
 
-
-  const body = await req.text()
-
+  const body =
+    await req.text()
 
 
   let event
 
 
 
-  try{
+  try {
 
 
-    event = await stripe.webhooks.constructEventAsync(
-
-  body,
-
-  signature!,
-
-  Deno.env.get(
-    "STRIPE_WEBHOOK_SECRET"
-  )!
-
-)
+    event =
+      await stripe.webhooks.constructEventAsync(
+        body,
+        signature!,
+        Deno.env.get("STRIPE_WEBHOOK_SECRET")!
+      )
 
 
-  }catch(error){
+  } catch(error){
 
 
     console.log(
@@ -73,13 +53,10 @@ Deno.serve(async (req)=>{
 
 
     return new Response(
-
       "Webhook inválido",
-
       {
         status:400
       }
-
     )
 
   }
@@ -88,24 +65,26 @@ Deno.serve(async (req)=>{
 
 
 
+  console.log("==============================")
   console.log(
     "Evento recibido:",
     event.type
   )
+  console.log("==============================")
 
 
 
 
 
 
+  // ======================================
+  // CREAR / ACTUALIZAR SUSCRIPCIÓN
+  // ======================================
 
-  // CREAR O ACTUALIZAR SUSCRIPCIÓN
 
   if(
 
-    event.type === "customer.subscription.created"
-
-    ||
+    event.type === "customer.subscription.created" ||
 
     event.type === "customer.subscription.updated"
 
@@ -124,13 +103,22 @@ Deno.serve(async (req)=>{
 
 
 
-
     console.log(
       "Usuario:",
       user_id
     )
 
 
+    console.log(
+      "Estado Stripe:",
+      subscription.status
+    )
+
+
+    console.log(
+      "Subscription:",
+      subscription.id
+    )
 
 
 
@@ -138,18 +126,28 @@ Deno.serve(async (req)=>{
 
 
 
-      const {error} = await supabase
+      const {error}=
+
+      await supabase
 
       .from("user_settings")
 
       .upsert({
 
 
+
         id:user_id,
 
 
+
+        // Solo Premium si Stripe confirma
+
         is_premium:
-          subscription.status === "active",
+
+          subscription.status === "active" ||
+
+          subscription.status === "trialing",
+
 
 
 
@@ -177,16 +175,137 @@ Deno.serve(async (req)=>{
           ).toISOString()
 
 
+
       })
+
+
 
 
 
       if(error){
 
+
         console.log(
-          "Error actualizando usuario:",
+          "❌ Error actualizando usuario:",
           error
         )
+
+
+      }else{
+
+
+        console.log(
+          "✅ Suscripción guardada"
+        )
+
+
+      }
+
+
+
+    }
+
+
+  }
+
+
+
+
+
+
+
+
+
+  // ======================================
+  // PAGO CONFIRMADO
+  // ======================================
+
+
+  if(
+
+    event.type === "invoice.paid" ||
+
+    event.type === "invoice.payment_succeeded"
+
+  ){
+
+
+
+    const invoice =
+      event.data.object
+
+
+
+    const subscriptionId =
+      invoice.subscription
+
+
+
+
+    console.log(
+      "Pago confirmado"
+    )
+
+
+    console.log(
+      "Subscription:",
+      subscriptionId
+    )
+
+
+
+
+
+    if(subscriptionId){
+
+
+
+      const {error}=
+
+      await supabase
+
+      .from("user_settings")
+
+      .update({
+
+
+        is_premium:true,
+
+
+        subscription_status:"active"
+
+
+
+      })
+
+      .eq(
+
+        "stripe_subscription_id",
+
+        subscriptionId
+
+      )
+
+
+
+
+
+      if(error){
+
+
+        console.log(
+          "❌ Error activando Premium:",
+          error
+        )
+
+
+      }else{
+
+
+        console.log(
+          "✅ Premium activado correctamente"
+        )
+
 
       }
 
@@ -204,7 +323,12 @@ Deno.serve(async (req)=>{
 
 
 
+
+
+  // ======================================
   // CANCELACIÓN
+  // ======================================
+
 
   if(
 
@@ -226,15 +350,27 @@ Deno.serve(async (req)=>{
 
 
 
+    console.log(
+      "Cancelación usuario:",
+      user_id
+    )
+
+
+
+
+
     if(user_id){
 
 
 
-      const {error} = await supabase
+      const {error}=
+
+      await supabase
 
       .from("user_settings")
 
       .update({
+
 
 
         is_premium:false,
@@ -243,22 +379,40 @@ Deno.serve(async (req)=>{
         subscription_status:"canceled"
 
 
+
       })
 
       .eq(
+
         "id",
+
         user_id
+
       )
+
+
 
 
 
       if(error){
 
+
         console.log(
+          "❌ Error cancelando:",
           error
         )
 
+
+      }else{
+
+
+        console.log(
+          "✅ Usuario cambiado a Free"
+        )
+
+
       }
+
 
 
     }
@@ -275,7 +429,10 @@ Deno.serve(async (req)=>{
 
 
 
+  // ======================================
   // PAGO FALLIDO
+  // ======================================
+
 
   if(
 
@@ -296,20 +453,31 @@ Deno.serve(async (req)=>{
 
 
 
+    console.log(
+      "Pago fallido:",
+      subscriptionId
+    )
+
+
+
+
 
     if(subscriptionId){
 
 
 
-      const {error} = await supabase
+      const {error}=
+
+      await supabase
 
       .from("user_settings")
 
       .update({
 
 
-        subscription_status:
-          "past_due"
+
+        subscription_status:"past_due"
+
 
 
       })
@@ -324,9 +492,16 @@ Deno.serve(async (req)=>{
 
 
 
+
+
       if(error){
 
-        console.log(error)
+
+        console.log(
+          "❌ Error pago fallido:",
+          error
+        )
+
 
       }
 
@@ -348,11 +523,13 @@ Deno.serve(async (req)=>{
 
   return new Response(
 
+
     JSON.stringify({
 
       received:true
 
     }),
+
 
     {
 
@@ -364,6 +541,7 @@ Deno.serve(async (req)=>{
       }
 
     }
+
 
   )
 
