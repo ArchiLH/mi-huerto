@@ -1,316 +1,372 @@
 import Stripe from "https://esm.sh/stripe@14.21.0"
 
 import {
- createClient
+  createClient
 } from "https://esm.sh/@supabase/supabase-js@2"
 
 
 
-const stripe =
-new Stripe(
+const stripe = new Stripe(
 
- Deno.env.get(
-  "STRIPE_SECRET_KEY"
- )!,
+  Deno.env.get("STRIPE_SECRET_KEY")!,
 
- {
-  apiVersion:"2023-10-16"
- }
+  {
+    apiVersion: "2023-10-16"
+  }
 
 )
 
 
 
-const supabase =
-createClient(
+const supabase = createClient(
 
- Deno.env.get(
-  "SUPABASE_URL"
- )!,
+  Deno.env.get("SUPABASE_URL")!,
 
- Deno.env.get(
-  "SUPABASE_SERVICE_ROLE_KEY"
- )!
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 
 )
 
 
 
 
-Deno.serve(async(req)=>{
+
+Deno.serve(async (req)=>{
 
 
-const signature =
-req.headers.get(
- "stripe-signature"
-)
-
-
-
-const body =
-await req.text()
+  const signature = req.headers.get(
+    "stripe-signature"
+  )
 
 
 
-let event:Stripe.Event
+  const body = await req.text()
 
 
 
-try{
+  let event
 
 
-event =
-stripe.webhooks.constructEvent(
 
- body,
+  try{
 
- signature!,
 
- Deno.env.get(
-  "STRIPE_WEBHOOK_SECRET"
- )!
+    event = await stripe.webhooks.constructEventAsync(
+
+  body,
+
+  signature!,
+
+  Deno.env.get(
+    "STRIPE_WEBHOOK_SECRET"
+  )!
 
 )
 
 
+  }catch(error){
 
-}catch(error){
 
+    console.log(
+      "Webhook inválido",
+      error
+    )
 
-return new Response(
 
-"Webhook inválido",
+    return new Response(
 
-{
-status:400
-}
+      "Webhook inválido",
 
-)
+      {
+        status:400
+      }
 
-}
+    )
 
+  }
 
 
 
 
-// CREAR O ACTUALIZAR SUSCRIPCIÓN
 
-if(
+  console.log(
+    "Evento recibido:",
+    event.type
+  )
 
-event.type ===
-"customer.subscription.created"
 
-||
 
-event.type ===
-"customer.subscription.updated"
 
-){
 
 
 
-const subscription =
-event.data.object
-as Stripe.Subscription
+  // CREAR O ACTUALIZAR SUSCRIPCIÓN
 
+  if(
 
+    event.type === "customer.subscription.created"
 
+    ||
 
-const user_id =
-subscription.metadata.user_id
+    event.type === "customer.subscription.updated"
 
+  ){
 
 
 
-if(user_id){
+    const subscription =
+      event.data.object
 
 
 
-await supabase
+    const user_id =
+      subscription.metadata?.user_id
 
-.from(
- "user_settings"
-)
 
-.upsert({
 
 
-id:user_id,
 
+    console.log(
+      "Usuario:",
+      user_id
+    )
 
-is_premium:
-subscription.status === "active",
 
 
 
-stripe_customer_id:
-subscription.customer,
 
+    if(user_id){
 
 
-stripe_subscription_id:
-subscription.id,
 
+      const {error} = await supabase
 
+      .from("user_settings")
 
-subscription_status:
-subscription.status,
+      .upsert({
 
 
+        id:user_id,
 
-subscription_end:
 
-new Date(
+        is_premium:
+          subscription.status === "active",
 
-subscription.current_period_end
-*1000
 
-)
-.toISOString()
 
+        stripe_customer_id:
+          subscription.customer,
 
 
-})
 
+        stripe_subscription_id:
+          subscription.id,
 
 
-}
 
+        subscription_status:
+          subscription.status,
 
 
-}
 
+        subscription_end:
 
+          new Date(
 
+            subscription.current_period_end * 1000
 
+          ).toISOString()
 
 
-// CANCELACIÓN
+      })
 
-if(
 
-event.type ===
-"customer.subscription.deleted"
 
-){
+      if(error){
 
+        console.log(
+          "Error actualizando usuario:",
+          error
+        )
 
-const subscription =
-event.data.object
-as Stripe.Subscription
+      }
 
 
 
-const user_id =
-subscription.metadata.user_id
+    }
 
 
 
+  }
 
-if(user_id){
 
 
-await supabase
 
-.from(
- "user_settings"
-)
 
-.update({
 
-is_premium:false,
 
-subscription_status:
-"canceled"
+  // CANCELACIÓN
 
-})
+  if(
 
-.eq(
-"id",
-user_id
-)
+    event.type === "customer.subscription.deleted"
 
+  ){
 
-}
 
 
-}
+    const subscription =
+      event.data.object
 
 
 
+    const user_id =
+      subscription.metadata?.user_id
 
-// PAGO FALLIDO
 
-if(
 
-event.type ===
-"invoice.payment_failed"
 
-){
 
+    if(user_id){
 
-const invoice =
-event.data.object
-as Stripe.Invoice
 
 
+      const {error} = await supabase
 
-const subscriptionId =
-invoice.subscription
+      .from("user_settings")
 
+      .update({
 
 
-if(subscriptionId){
+        is_premium:false,
 
 
+        subscription_status:"canceled"
 
-await supabase
 
-.from(
-"user_settings"
-)
+      })
 
-.update({
+      .eq(
+        "id",
+        user_id
+      )
 
-subscription_status:
-"past_due"
 
-})
 
-.eq(
-"stripe_subscription_id",
-subscriptionId
-)
+      if(error){
 
+        console.log(
+          error
+        )
 
-}
+      }
 
 
+    }
 
-}
 
 
+  }
 
-return new Response(
 
-JSON.stringify({
 
-received:true
 
-}),
 
-{
 
-headers:{
 
-"Content-Type":
-"application/json"
 
-}
 
-}
+  // PAGO FALLIDO
 
-)
+  if(
+
+    event.type === "invoice.payment_failed"
+
+  ){
+
+
+
+    const invoice =
+      event.data.object
+
+
+
+    const subscriptionId =
+      invoice.subscription
+
+
+
+
+
+    if(subscriptionId){
+
+
+
+      const {error} = await supabase
+
+      .from("user_settings")
+
+      .update({
+
+
+        subscription_status:
+          "past_due"
+
+
+      })
+
+      .eq(
+
+        "stripe_subscription_id",
+
+        subscriptionId
+
+      )
+
+
+
+      if(error){
+
+        console.log(error)
+
+      }
+
+
+
+    }
+
+
+
+  }
+
+
+
+
+
+
+
+
+
+  return new Response(
+
+    JSON.stringify({
+
+      received:true
+
+    }),
+
+    {
+
+      headers:{
+
+        "Content-Type":
+          "application/json"
+
+      }
+
+    }
+
+  )
+
 
 
 })

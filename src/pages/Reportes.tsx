@@ -26,7 +26,7 @@ type GlobalStat = {
   warningSpaces: number
 }
 
-export default function Dashboard() {
+export default function Reportes() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [stats, setStats] = useState<GlobalStat | null>(null)
@@ -34,9 +34,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'resumen' | 'plantas' | 'graficas'>('resumen')
 
-  useEffect(() => { loadDashboard() }, [])
+  useEffect(() => { loadReportes() }, [])
 
-  const loadDashboard = async () => {
+  const loadReportes = async () => {
     if (!user) return
 
     const { data: spaces } = await supabase

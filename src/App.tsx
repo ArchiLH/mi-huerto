@@ -12,7 +12,7 @@ import Historial from './pages/Historial'
 import Plantas from './pages/Plantas'
 import Simulador from './pages/Simulador'
 import Configuracion from './pages/Configuracion'
-import Dashboard from './pages/Reportes'
+import Reportes from './pages/Reportes'
 import Success from './pages/Success'
 import Perfil from './pages/Perfil'
 import ResetPassword from './pages/ResetPassword'
@@ -80,7 +80,7 @@ function AppRoutes() {
         <Route path="/plantas" element={<Plantas />} />
         <Route path="/simulador" element={<Simulador />} />
         <Route path="/configuracion" element={<Configuracion />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/reportes" element={<Reportes />} />
         <Route path="/perfil" element={<Perfil />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
