@@ -36,6 +36,14 @@ function timeAgo(dateStr?: string) {
   return `hace ${Math.floor(diff / 86400)} días`
 }
 
+function timeAgoSync(dateStr: string) {
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
+  if (diff < 60) return 'hace un momento'
+  if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`
+  if (diff < 86400) return `hace ${Math.floor(diff / 3600)} h`
+  return `hace ${Math.floor(diff / 86400)} días`
+}
+
 function SpaceCard({ space, onClick }: { space: Space; onClick: () => void }) {
   const status = getStatus(space)
 
@@ -83,7 +91,6 @@ function SpaceCard({ space, onClick }: { space: Space; onClick: () => void }) {
       }}
     >
       <div className="flex items-start gap-4">
-        {/* EMOJI */}
         <div
           className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shrink-0"
           style={{ backgroundColor: '#1a3a20' }}
@@ -91,7 +98,6 @@ function SpaceCard({ space, onClick }: { space: Space; onClick: () => void }) {
           {space.plant_catalog?.emoji ?? '🪴'}
         </div>
 
-        {/* INFO */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
             <h3 className="font-bold text-white text-base truncate">
@@ -113,7 +119,7 @@ function SpaceCard({ space, onClick }: { space: Space; onClick: () => void }) {
 
           {status === 'no_sensor' && (
             <p className="text-xs mb-1" style={{ color: '#6b9e6e' }}>
-              📡 Último señal hace 1 h
+              📡 Sin sensor conectado
             </p>
           )}
 
@@ -164,6 +170,7 @@ export default function MiHuerto() {
   const [loading, setLoading] = useState(true)
   const [showUpgrade, setShowUpgrade] = useState(false)
   const [isUpgrading, setIsUpgrading] = useState(false)
+  const [lastSync, setLastSync] = useState<string | null>(null)
 
   const initialized = useRef(false)
 
@@ -240,6 +247,26 @@ export default function MiHuerto() {
       )
 
       setSpaces(enriched)
+
+      // ✅ ÚLTIMA SINCRONIZACIÓN REAL
+      const allSensorIds = enriched
+        .filter(s => s.sensors && s.sensors.length > 0)
+        .map(s => s.sensors![0].id)
+
+      if (allSensorIds.length > 0) {
+        const { data: lastReading } = await supabase
+          .from('readings')
+          .select('recorded_at')
+          .in('sensor_id', allSensorIds)
+          .order('recorded_at', { ascending: false })
+          .limit(1)
+          .single()
+
+        if (lastReading) {
+          setLastSync(lastReading.recorded_at)
+        }
+      }
+
     } catch (err) {
       console.error('Error:', err)
     } finally {
@@ -348,21 +375,22 @@ export default function MiHuerto() {
           Monitoreo inteligente para cada espacio de tu huerto
         </h2>
 
-        {/* SYNC */}
+        {/* ✅ SYNC REAL */}
         <div
           className="flex items-center gap-2 text-xs rounded-xl px-3 py-2 mb-4"
-          style={{ backgroundColor: '#0a1a0f', color: '#4ade80' }}
+          style={{ backgroundColor: '#0a1a0f', color: lastSync ? '#4ade80' : '#6b9e6e' }}
         >
           <span>●</span>
-          <span>Sincronizado hace 2 min</span>
+          <span>
+            {lastSync
+              ? `Sincronizado ${timeAgoSync(lastSync)}`
+              : 'Sin lecturas registradas aún'}
+          </span>
         </div>
 
         {/* STATS */}
         <div className="grid grid-cols-2 gap-3">
-          <div
-            className="rounded-xl p-3"
-            style={{ backgroundColor: '#0a1a0f' }}
-          >
+          <div className="rounded-xl p-3" style={{ backgroundColor: '#0a1a0f' }}>
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center text-lg mb-2"
               style={{ backgroundColor: '#1a3a20' }}
@@ -380,10 +408,7 @@ export default function MiHuerto() {
             </p>
           </div>
 
-          <div
-            className="rounded-xl p-3"
-            style={{ backgroundColor: '#0a1a0f' }}
-          >
+          <div className="rounded-xl p-3" style={{ backgroundColor: '#0a1a0f' }}>
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center text-lg mb-2"
               style={{ backgroundColor: '#1a3a20' }}
@@ -403,10 +428,7 @@ export default function MiHuerto() {
             </p>
           </div>
 
-          <div
-            className="rounded-xl p-3"
-            style={{ backgroundColor: '#0a1a0f' }}
-          >
+          <div className="rounded-xl p-3" style={{ backgroundColor: '#0a1a0f' }}>
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center text-lg mb-2"
               style={{ backgroundColor: '#1a3a20' }}
