@@ -171,6 +171,9 @@ export default function MiHuerto() {
   const [showUpgrade, setShowUpgrade] = useState(false)
   const [isUpgrading, setIsUpgrading] = useState(false)
   const [lastSync, setLastSync] = useState<string | null>(null)
+  
+  // NUEVO: Estado para almacenar el nombre completo dinámico
+  const [fullName, setFullName] = useState('')
 
   const initialized = useRef(false)
 
@@ -186,6 +189,7 @@ export default function MiHuerto() {
     if (!user) return
 
     try {
+      // 1. Obtener la configuración Premium
       const { data: settings } = await supabase
         .from('user_settings')
         .select('is_premium')
@@ -195,6 +199,21 @@ export default function MiHuerto() {
       const premium = settings?.is_premium ?? false
       setIsPremium(premium)
 
+      // NUEVO: 2. Consultar el Perfil para traer el full_name del usuario
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single()
+
+      if (profileData?.full_name) {
+        setFullName(profileData.full_name)
+      } else {
+        // Fallback: Si no tiene nombre guardado aún, mostramos el alias del correo
+        setFullName(user.email?.split('@')[0] ?? 'Usuario')
+      }
+
+      // 3. Obtener Espacios de cultivo
       let { data, error } = await supabase
         .from('spaces')
         .select(`*, plant_catalog (name, emoji), sensors (id, active)`)
@@ -248,7 +267,7 @@ export default function MiHuerto() {
 
       setSpaces(enriched)
 
-      // ✅ ÚLTIMA SINCRONIZACIÓN REAL
+      // ÚLTIMA SINCRONIZACIÓN REAL
       const allSensorIds = enriched
         .filter(s => s.sensors && s.sensors.length > 0)
         .map(s => s.sensors![0].id)
@@ -291,6 +310,19 @@ export default function MiHuerto() {
     }
   }
 
+  // Helper para generar las iniciales dinámicas para el Avatar circular
+  const getInitials = () => {
+    if (fullName) {
+      return fullName
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    }
+    return '?'
+  }
+
   const activeCount = spaces.filter(s => s.plant_id !== null).length
   const alertCount = spaces.reduce((acc, s) => acc + (s.unacknowledged_alerts ?? 0), 0)
   const healthyCount = spaces.filter(s => s.plant_id && (s.unacknowledged_alerts ?? 0) === 0 && s.sensors && s.sensors.length > 0).length
@@ -327,15 +359,17 @@ export default function MiHuerto() {
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
+            {/* AVATAR DINÁMICO */}
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm"
               style={{ backgroundColor: '#1a3a20', color: '#a3d9a5' }}
             >
-              {user?.email?.[0].toUpperCase()}
+              {getInitials()}
             </div>
             <div>
+              {/* NOMBRE DINÁMICO */}
               <p className="font-bold text-white text-sm">
-                Hola, {user?.email?.split('@')[0]}
+                Hola, {fullName}
               </p>
               <p className="text-xs" style={{ color: '#6b9e6e' }}>
                 {activeCount > 0
@@ -375,7 +409,7 @@ export default function MiHuerto() {
           Monitoreo inteligente para cada espacio de tu huerto
         </h2>
 
-        {/* ✅ SYNC REAL */}
+        {/* SYNC REAL */}
         <div
           className="flex items-center gap-2 text-xs rounded-xl px-3 py-2 mb-4"
           style={{ backgroundColor: '#0a1a0f', color: lastSync ? '#4ade80' : '#6b9e6e' }}
