@@ -84,6 +84,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const goHomeFromMenu = () => {
+    setIsMenuOpen(false)
+    navigate('/')
+  }
+
   const displayName = profileName || user?.email || 'Usuario'
 
   return (
@@ -97,11 +102,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <img
-            src="/logo.png"
-            alt="Secret Garden"
-            className="w-9 h-9 object-contain"
-          />
+          <button
+            onClick={() => navigate('/')}
+            className="transition-transform active:scale-95 cursor-pointer"
+            aria-label="Ir al inicio"
+          >
+            <img
+              src="/logo.png"
+              alt="Secret Garden"
+              className="w-9 h-9 object-contain"
+            />
+          </button>
         </div>
         
         {/* BOTÓN CIRCULAR DE PERFIL */}
@@ -124,7 +135,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* MENÚ LATERAL HAMBURGUESA */}
       <aside className={`fixed top-0 bottom-0 left-0 w-[290px] bg-[#113824] text-white z-50 flex flex-col justify-between p-5 transition-transform duration-300 ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="space-y-6">
-          <div className="flex items-center gap-3 pb-2">
+          <button
+            onClick={goHomeFromMenu}
+            className="flex items-center gap-3 pb-2 text-left transition-transform active:scale-95 cursor-pointer"
+          >
             <div className="w-12 h-12 bg-white rounded-2xl p-1.5 flex items-center justify-center shadow-md">
               <img
                 src="/logo.png"
@@ -136,7 +150,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <h2 className="font-black text-base tracking-tight leading-tight">Secret Garden</h2>
               <p className="text-[11px] text-emerald-300/80 font-medium">Jardín Inteligente</p>
             </div>
-          </div>
+          </button>
           <hr className="border-emerald-800/60" />
           <div className="space-y-3">
             <p className="text-[10px] font-bold tracking-widest text-emerald-400/70 uppercase pl-2">Navegación</p>
