@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { usePremium } from '../context/PremiumContext'
 import { useNavigate } from 'react-router-dom'
-import { handlePurchase } from '../lib/stripe' // ← Importamos tu función de Stripe
+import { handlePurchase } from '../lib/stripe'
 
 const COUNTRIES = [
   { name: 'Perú', flag: '🇵🇪' },
@@ -30,6 +31,7 @@ type Profile = {
 
 export default function Perfil() {
   const { user } = useAuth()
+  const { isPremium } = usePremium() // ← Usamos el contexto
   const navigate = useNavigate()
 
   const [profile, setProfile] = useState<Profile>({
@@ -39,13 +41,12 @@ export default function Perfil() {
     flag: ''
   })
 
-  const [isPremium, setIsPremium] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [totalPlants, setTotalPlants] = useState(0)
   const [memberSince, setMemberSince] = useState('')
-  const [isRedirecting, setIsRedirecting] = useState(false) // ← Estado de carga para Stripe
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   useEffect(() => {
     loadAll()
@@ -70,14 +71,7 @@ export default function Perfil() {
       })
     }
 
-    // 2. Validar Premium real desde la base de datos
-    const { data: settings } = await supabase
-      .from('user_settings')
-      .select('is_premium')
-      .eq('id', user.id)
-      .single()
-
-    setIsPremium(settings?.is_premium ?? false)
+    // 2. Ya no cargamos isPremium aquí, viene del contexto
 
     // 3. Cantidad de plantas activas
     const { count } = await supabase
@@ -127,7 +121,6 @@ export default function Perfil() {
     }, 3000)
   }
 
-  // FUNCIÓN ACTUALIZADA: Llama a handlePurchase con las credenciales reales del usuario
   const handleStripeCheckout = async () => {
     if (!user || !user.email || isRedirecting) return
     try {

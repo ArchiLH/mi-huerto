@@ -16,6 +16,7 @@ import Reportes from './pages/Reportes'
 import Success from './pages/Success'
 import Perfil from './pages/Perfil'
 import ResetPassword from './pages/ResetPassword'
+import { PremiumProvider } from './context/PremiumContext'
 
 
 function AppRoutes() {
@@ -70,6 +71,7 @@ function AppRoutes() {
   if (!user) return <Login />
 
   return (
+    <PremiumProvider>
     <Layout>
       <Routes>
         <Route path="/" element={<MiHuerto />} />
@@ -85,6 +87,7 @@ function AppRoutes() {
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Layout>
+    </PremiumProvider>
   )
 }
 

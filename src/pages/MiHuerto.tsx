@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
-import { handlePurchase } from '../lib/stripe' // ← Importamos tu función de Stripe
+import { usePremium } from '../context/PremiumContext'
+import { handlePurchase } from '../lib/stripe'
 
 const FREE_LIMIT = 4
 const PREMIUM_LIMIT = 8
@@ -161,13 +162,13 @@ function LockedSpaceCard({ onUnlock }: { onUnlock: () => void }) {
 
 export default function MiHuerto() {
   const { user } = useAuth()
+  const { isPremium } = usePremium() // ← Usamos el contexto
 
   const [spaces, setSpaces] = useState<Space[]>([])
   const [plants, setPlants] = useState<Plant[]>([])
-  const [isPremium, setIsPremium] = useState(false)
   const [loading, setLoading] = useState(true)
   const [fullName, setFullName] = useState('')
-  const [isRedirecting, setIsRedirecting] = useState(false) // ← Estado de carga para Stripe
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   // Modales
   const [assigningToSpaceId, setAssigningToSpaceId] = useState<number | null>(null)
@@ -191,13 +192,7 @@ export default function MiHuerto() {
   const loadData = async () => {
     if (!user) return
     try {
-      const { data: settings } = await supabase
-        .from('user_settings')
-        .select('is_premium')
-        .eq('id', user.id)
-        .single()
-
-      setIsPremium(settings?.is_premium ?? false)
+      // Ya no cargamos isPremium aquí, viene del contexto
 
       const { data: profileData } = await supabase
         .from('profiles')
@@ -393,7 +388,7 @@ export default function MiHuerto() {
         </p>
       </div>
 
-      {/* PLAN PREMIUM DINÁMICO */}
+      {/* PLAN PREMIUM DINÁMICO - Usa isPremium del contexto */}
       <div>
         {isPremium ? (
           <div className="inline-flex items-center gap-1.5 bg-[#ff9100] text-white font-black text-[11px] px-4 py-1.5 rounded-xl shadow-xs">
