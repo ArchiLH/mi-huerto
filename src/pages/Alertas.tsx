@@ -105,175 +105,161 @@ export default function Alertas() {
 
   if (loading) {
     return (
-      <div className="space-y-3">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-28 rounded-2xl animate-pulse" style={{ backgroundColor: '#0d2318' }} />
-        ))}
+      <div className="w-full bg-white px-5 pt-6 space-y-4">
+        <div className="h-6 w-1/3 bg-slate-100 rounded-lg animate-pulse" />
+        <div className="space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-24 bg-slate-50 rounded-2xl animate-pulse border border-slate-100" />
+          ))}
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-5">
+    <div className="w-full bg-white text-slate-800 font-sans px-5 pt-6 space-y-5 max-w-md mx-auto pb-10">
 
-      {/* HEADER */}
-      <div
-        className="rounded-2xl p-5"
-        style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-      >
+      {/* HEADER (Estilo e instrucciones exactas de la imagen) */}
+      <div className="space-y-1">
         <div className="flex items-center justify-between">
-          <div>
-            <span className="text-xs font-mono uppercase tracking-widest" style={{ color: '#4a6a4a' }}>
-              Sistema de alertas
-            </span>
-            <h1 className="text-xl font-bold text-white mt-1">🔔 Alertas</h1>
-            <p className="text-sm mt-0.5" style={{ color: '#6b9e6e' }}>
-              {pending.length > 0
-                ? `${pending.length} alerta${pending.length !== 1 ? 's' : ''} pendiente${pending.length !== 1 ? 's' : ''}`
-                : 'Todo al día ✅'}
-            </p>
-          </div>
+          <h1 className="text-2xl font-black text-[#1e293b] tracking-tight">
+            Alertas de tus plantas
+          </h1>
           {pending.length > 0 && (
             <button
               onClick={acknowledgeAll}
-              className="text-xs px-3 py-2 rounded-xl transition"
-              style={{ backgroundColor: '#1a3a20', color: '#4ade80' }}
+              className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition"
             >
-              ✓ Todas
+              ✓ Marcar todo
             </button>
           )}
         </div>
+        <p className="text-xs text-slate-400 font-medium leading-relaxed">
+          Cuando una planta necesita cuidado, te avisamos aquí con instrucciones
+        </p>
       </div>
 
-      {/* TABS */}
-      <div
-        className="flex rounded-xl p-1 gap-1"
-        style={{ backgroundColor: '#0d2318' }}
-      >
+      {/* TABS SELECTORES DE VISTA MÍNIMALISTAS */}
+      <div className="flex bg-slate-100/70 p-1 rounded-xl border border-slate-200/30">
         <button
           onClick={() => setTab('pending')}
-          className="flex-1 py-2 rounded-lg text-xs font-medium transition"
-          style={{
-            backgroundColor: tab === 'pending' ? '#2d6a35' : 'transparent',
-            color: tab === 'pending' ? 'white' : '#6b9e6e',
-          }}
+          className={`flex-1 text-center py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            tab === 'pending'
+              ? 'bg-white text-[#008f51] shadow-2xs'
+              : 'text-slate-400 hover:text-slate-600'
+          }`}
         >
           Pendientes
           {pending.length > 0 && (
-            <span
-              className="ml-2 text-xs rounded-full px-1.5 py-0.5"
-              style={{ backgroundColor: '#f87171', color: 'white' }}
-            >
+            <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-black">
               {pending.length}
             </span>
           )}
         </button>
         <button
           onClick={() => setTab('all')}
-          className="flex-1 py-2 rounded-lg text-xs font-medium transition"
-          style={{
-            backgroundColor: tab === 'all' ? '#2d6a35' : 'transparent',
-            color: tab === 'all' ? 'white' : '#6b9e6e',
-          }}
+          className={`flex-1 text-center py-2 rounded-lg text-xs font-bold transition-all ${
+            tab === 'all'
+              ? 'bg-white text-[#008f51] shadow-2xs'
+              : 'text-slate-400 hover:text-slate-600'
+          }`}
         >
-          Todas ({alerts.length})
+          Historial ({alerts.length})
         </button>
       </div>
 
-      {/* LISTA */}
+      {/* DETECCIÓN DE PANTALLA VACÍA (Mismo diseño, textos y colores de tu captura) */}
       {displayed.length === 0 ? (
-        <div
-          className="rounded-2xl p-10 text-center"
-          style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-        >
-          <p className="text-4xl mb-3">✅</p>
-          <p className="font-medium text-white">¡Todo al día!</p>
-          <p className="text-sm mt-1" style={{ color: '#6b9e6e' }}>
-            {tab === 'pending' ? 'No tienes alertas pendientes' : 'No hay alertas registradas'}
+        <div className="bg-white rounded-[2rem] border-2 border-dashed border-slate-200 p-10 flex flex-col items-center justify-center text-center shadow-3xs my-4 py-14">
+          <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center text-5xl mb-6 relative">
+            🌱
+            <span className="absolute bottom-0 right-1 text-xl">🧡</span>
+          </div>
+          <h2 className="text-lg font-black text-slate-800 tracking-tight">
+            ¡Todo está bien!
+          </h2>
+          <p className="text-xs text-slate-400 mt-2 max-w-[240px] font-medium leading-relaxed">
+            No hay alertas por el momento. Tus plantas están felices.
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {displayed.map(alert => (
-            <div
-              key={alert.id}
-              className="rounded-2xl p-4 transition"
-              style={{
-                backgroundColor: !alert.acknowledged ? '#1a0808' : '#0d2318',
-                border: `1px solid ${!alert.acknowledged ? '#5a1a1a' : '#1a3a20'}`,
-                opacity: alert.acknowledged ? 0.6 : 1
-              }}
-            >
-              <div className="flex gap-3">
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0"
-                  style={{ backgroundColor: !alert.acknowledged ? '#3a1010' : '#1a3a20' }}
-                >
-                  {alert.plant_emoji ?? alertTypeIcon[alert.type] ?? '⚠️'}
-                </div>
+        /* LISTADO DE RECUADROS CON ALERTAS REALES */
+        <div className="space-y-3.5">
+          {displayed.map(alert => {
+            const isNew = !alert.acknowledged
+            return (
+              <div
+                key={alert.id}
+                className={`bg-white rounded-2xl p-4 border transition-all ${
+                  isNew 
+                    ? 'border-red-200 shadow-xs bg-red-50/5' 
+                    : 'border-slate-100 opacity-60'
+                }`}
+              >
+                <div className="flex gap-3 items-start">
+                  {/* Icono de brote o tipo de problema */}
+                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 ${
+                    isNew ? 'bg-red-50 text-red-500' : 'bg-slate-50'
+                  }`}>
+                    {alert.plant_emoji ?? alertTypeIcon[alert.type] ?? '⚠️'}
+                  </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="font-bold text-sm text-white">
-                      {alert.plant_name ?? alert.sensor_name}
-                    </span>
-                    {!alert.acknowledged && (
-                      <span
-                        className="text-xs rounded-full px-2 py-0.5"
-                        style={{ backgroundColor: '#3a1010', color: '#f87171' }}
-                      >
-                        Nueva
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                      <span className="font-bold text-xs text-slate-800 truncate">
+                        {alert.plant_name ?? alert.sensor_name}
                       </span>
+                      {isNew && (
+                        <span className="text-[9px] bg-red-100 text-red-600 font-extrabold rounded-full px-2 py-0.2">
+                          Crítico
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-xs font-bold text-slate-700 mb-1">
+                      {alertTypeTitle[alert.type] ?? alert.type}
+                    </p>
+
+                    {alert.care_message && (
+                      <p className="text-[11px] text-emerald-600 font-medium mb-2 leading-relaxed bg-emerald-50/30 p-2 rounded-xl border border-emerald-100/50">
+                        💡 {alert.care_message}
+                      </p>
+                    )}
+
+                    {/* Meta datos inferiores */}
+                    <div className="flex items-center gap-2 text-[10px] text-slate-400 font-medium flex-wrap">
+                      <span className="font-bold text-slate-500">
+                        Valor: {alert.value.toFixed(1)}{alert.type.includes('temp') ? '°C' : '%'}
+                      </span>
+                      <span>•</span>
+                      <span>📍 {alert.space_name}</span>
+                      <span>•</span>
+                      <span>
+                        {new Date(alert.created_at).toLocaleString('es-PE', {
+                          day: '2-digit', month: '2-digit',
+                          hour: '2-digit', minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Acción individual */}
+                  <div className="shrink-0 pl-1">
+                    {isNew ? (
+                      <button
+                        onClick={() => acknowledge(alert.id)}
+                        className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg bg-[#e2faee] text-[#008f51] hover:bg-[#cbf3de] transition-colors"
+                      >
+                        Entendido
+                      </button>
+                    ) : (
+                      <span className="text-xs block text-center pt-1">✅</span>
                     )}
                   </div>
-
-                  <p className="text-sm text-white mb-1">
-                    {alertTypeIcon[alert.type]} {alertTypeTitle[alert.type] ?? alert.type}
-                  </p>
-
-                  {alert.care_message && (
-                    <p className="text-xs mb-2" style={{ color: '#a3d9a5' }}>
-                      💡 {alert.care_message}
-                    </p>
-                  )}
-
-                  <div className="flex items-center gap-3 text-xs" style={{ color: '#4a6a4a' }}>
-                    <span>
-                      {alert.value.toFixed(1)}{alert.type.includes('temp') ? '°C' : '%'}
-                    </span>
-                    <span>·</span>
-                    <span>📍 {alert.space_name}</span>
-                    <span>·</span>
-                    <span>
-                      {new Date(alert.created_at).toLocaleString('es-PE', {
-                        day: '2-digit', month: '2-digit',
-                        hour: '2-digit', minute: '2-digit'
-                      })}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="shrink-0">
-                  {!alert.acknowledged ? (
-                    <button
-                      onClick={() => acknowledge(alert.id)}
-                      className="text-xs px-3 py-1.5 rounded-xl transition"
-                      style={{ backgroundColor: '#1a3a20', color: '#4ade80' }}
-                    >
-                      ✓ Listo
-                    </button>
-                  ) : (
-                    <span
-                      className="text-xs px-2 py-1 rounded-lg"
-                      style={{ backgroundColor: '#0a1a0f', color: '#4a6a4a' }}
-                    >
-                      ✅
-                    </span>
-                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

@@ -1,8 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
-import { handlePurchase } from '../lib/stripe'
+import { handlePurchase } from '../lib/stripe' // ← Importamos tu función de Stripe
 
 const FREE_LIMIT = 4
 const PREMIUM_LIMIT = 8
@@ -12,10 +11,17 @@ type Space = {
   slot_number: number
   name: string
   plant_id: number | null
-  plant_catalog?: { name: string; emoji: string } | null
-  sensors?: { id: number; active: boolean }[]
+  plant_catalog?: { id: number; name: string; emoji: string } | null
+  sensors?: { id: number; name: string; active: boolean }[]
   latest_reading?: { temperature: number; humidity: number; recorded_at?: string } | null
   unacknowledged_alerts?: number
+}
+
+type Plant = {
+  id: number
+  name: string
+  emoji: string
+  category: string | null
 }
 
 type SpaceStatus = 'ok' | 'warning' | 'no_sensor' | 'empty'
@@ -27,153 +33,150 @@ function getStatus(space: Space): SpaceStatus {
   return 'ok'
 }
 
-function timeAgo(dateStr?: string) {
-  if (!dateStr) return null
-  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
-  if (diff < 60) return 'hace un momento'
-  if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`
-  if (diff < 86400) return `hace ${Math.floor(diff / 3600)} h`
-  return `hace ${Math.floor(diff / 86400)} días`
-}
-
-function timeAgoSync(dateStr: string) {
-  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
-  if (diff < 60) return 'hace un momento'
-  if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`
-  if (diff < 86400) return `hace ${Math.floor(diff / 3600)} h`
-  return `hace ${Math.floor(diff / 86400)} días`
-}
-
-function SpaceCard({ space, onClick }: { space: Space; onClick: () => void }) {
+// COMPONENTE TARJETA DE ESPACIO INDIVIDUAL
+function SpaceCard({ 
+  space, 
+  onAssignSensor, 
+  onRemoveSensor,
+  onOpenPlantModal 
+}: { 
+  space: Space
+  onAssignSensor: () => void
+  onRemoveSensor: (sensorId: number) => void
+  onOpenPlantModal: () => void 
+}) {
   const status = getStatus(space)
+  const connectedSensor = space.sensors?.[0]
 
+  // Espacio Vacío
   if (status === 'empty') {
     return (
       <div
-        onClick={onClick}
-        className="rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition active:scale-95"
-        style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
+        onClick={onOpenPlantModal}
+        className="bg-white rounded-[2rem] border-2 border-dashed border-[#51e29d] p-5 flex flex-col items-center justify-center text-center cursor-pointer transition active:scale-98 aspect-[4/5] min-h-[230px]"
       >
-        <div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0"
-          style={{ backgroundColor: '#1a3a20' }}
-        >
-          🪴
+        <div className="w-12 h-12 rounded-2xl border-2 border-dashed border-[#51e29d] flex items-center justify-center text-[#22c55e] text-xl font-bold mb-3">
+          +
         </div>
-        <div className="flex-1">
-          <p className="font-semibold text-white">{space.name}</p>
-          <p className="text-xs mt-0.5" style={{ color: '#6b9e6e' }}>Toca para agregar planta</p>
-        </div>
-        <span style={{ color: '#2d6a35' }} className="text-xl">+</span>
+        <p className="font-extrabold text-[#1e293b] text-xs leading-tight">{space.name}</p>
+        <p className="text-[10px] text-slate-400 mt-1 max-w-[120px] font-semibold leading-tight">
+          Toca para agregar planta
+        </p>
       </div>
     )
   }
 
-  const statusLabel = {
-    ok: { text: 'Saludable', color: '#4ade80', bg: '#0a2a10' },
-    warning: { text: 'Alerta crítica', color: '#f87171', bg: '#2a0a0a' },
-    no_sensor: { text: 'Sensor desconectado', color: '#6b9e6e', bg: '#0d2318' },
-  }[status]
-
-  const ago = timeAgo(space.latest_reading?.recorded_at)
-
+  const isWarning = status === 'warning'
   return (
     <div
-      onClick={onClick}
-      className="rounded-2xl p-4 cursor-pointer transition active:scale-95"
-      style={{
-        background: status === 'warning'
-          ? 'linear-gradient(135deg, #1a0a0a 0%, #0d2318 100%)'
-          : status === 'no_sensor'
-          ? 'linear-gradient(135deg, #0d1a0d 0%, #0a1a0f 100%)'
-          : 'linear-gradient(135deg, #0d2318 0%, #0a1a0f 100%)',
-        border: `1px solid ${status === 'warning' ? '#5a1a1a' : '#1a3a20'}`
-      }}
+      className={`bg-white rounded-[2rem] border p-5 flex flex-col items-center justify-between text-center transition shadow-3xs min-h-[240px] relative ${
+        isWarning ? 'border-red-200 bg-red-50/5' : 'border-slate-100/80'
+      }`}
     >
-      <div className="flex items-start gap-4">
-        <div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shrink-0"
-          style={{ backgroundColor: '#1a3a20' }}
-        >
-          {space.plant_catalog?.emoji ?? '🪴'}
-        </div>
+      {isWarning && (
+        <span className="absolute top-4 right-4 bg-red-500 text-white text-[9px] w-4.5 h-4.5 rounded-full flex items-center justify-center font-black animate-pulse">
+          !
+        </span>
+      )}
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="font-bold text-white text-base truncate">
-              {space.plant_catalog?.name ?? space.name}
-            </h3>
-            <span
-              className="text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ml-2"
-              style={{ backgroundColor: statusLabel.bg, color: statusLabel.color }}
-            >
-              {statusLabel.text}
-            </span>
+      {/* Emoji de Planta */}
+      <div className="w-16 h-16 bg-[#fbfdfc] rounded-full flex items-center justify-center text-4xl border border-slate-100/50 shadow-3xs shrink-0">
+        {space.plant_catalog?.emoji ?? '🌿'}
+      </div>
+
+      {/* Nombre e info */}
+      <div className="w-full space-y-0.5">
+        <h4 className="font-extrabold text-slate-800 text-xs truncate px-1 leading-tight">
+          {space.plant_catalog?.name ?? space.name}
+        </h4>
+        <p className="text-[10px] text-slate-400 font-bold">{space.name}</p>
+      </div>
+
+      {/* ELEMENTOS DE TU IMAGEN */}
+      <div className="w-full flex flex-col items-center gap-2.5 py-1">
+        
+        {/* INDICADOR 1: • Sin Sensor / • Activo */}
+        {connectedSensor ? (
+          <div className="inline-flex items-center gap-1.5 text-[10px] font-extrabold px-3 py-1 bg-[#e2faee] text-[#008f51] rounded-full border border-emerald-100/30">
+            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+            {space.latest_reading ? `${space.latest_reading.temperature.toFixed(0)}°C · ${space.latest_reading.humidity.toFixed(0)}%` : 'Activo'}
           </div>
+        ) : (
+          <div className="inline-flex items-center gap-1.5 text-[10px] font-extrabold px-3.5 py-1 bg-[#f1f5f9] text-slate-500 rounded-full">
+            <span className="w-1.5 h-1.5 bg-slate-400 rounded-full" />
+            Sin sensor
+          </div>
+        )}
 
-          {status === 'warning' && (
-            <p className="text-xs mb-1" style={{ color: '#f87171' }}>
-              ⚠️ {space.unacknowledged_alerts} alerta{(space.unacknowledged_alerts ?? 0) > 1 ? 's' : ''} · Revisar ahora
-            </p>
-          )}
+        {/* INDICADOR 2: Icono Señal Tachada / Nombre del Sensor */}
+        {connectedSensor ? (
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="inline-flex items-center gap-1 text-[9px] font-bold text-slate-400 bg-slate-50 px-2.5 py-0.5 rounded-full">
+              📡 {connectedSensor.name}
+            </span>
+            <button
+              onClick={(e) => { e.stopPropagation(); onRemoveSensor(connectedSensor.id) }}
+              className="text-[8px] font-black text-red-400 hover:text-red-500 underline"
+            >
+              Quitar sensor
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={(e) => { e.stopPropagation(); onAssignSensor() }}
+            className="inline-flex items-center gap-1.5 text-[10px] font-bold px-3 py-1 bg-[#f8fafc]/90 text-slate-400 rounded-full border border-slate-100/20 hover:bg-slate-100/50 transition-colors"
+          >
+            <svg className="w-3.5 h-3.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18M10.268 5.732a9 9 0 0110.15 10.15M14.507 9.493a5 5 0 015.006 5.006M12 19a7 7 0 01-5.111-2.222" />
+            </svg>
+            Sin sensor
+          </button>
+        )}
 
-          {status === 'no_sensor' && (
-            <p className="text-xs mb-1" style={{ color: '#6b9e6e' }}>
-              📡 Sin sensor conectado
-            </p>
-          )}
-
-          {space.latest_reading && status !== 'no_sensor' && (
-            <p className="text-xs mb-1" style={{ color: '#a3d9a5' }}>
-              {space.latest_reading.temperature.toFixed(0)}° · Temp · {space.latest_reading.humidity.toFixed(0)}% · Hum
-            </p>
-          )}
-
-          {ago && (
-            <p className="text-xs" style={{ color: '#4a6a4a' }}>
-              Actualizado {ago}
-            </p>
-          )}
-        </div>
+        {/* BOTÓN CAMBIAR */}
+        <button
+          onClick={onOpenPlantModal}
+          className="w-24 py-1.5 rounded-xl text-[10px] font-black text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-all shadow-3xs mt-1"
+        >
+          Cambiar
+        </button>
+        
       </div>
     </div>
   )
 }
 
-function LockedSpaceCard({ onClick }: { onClick: () => void }) {
+function LockedSpaceCard({ onUnlock }: { onUnlock: () => void }) {
   return (
-    <div
-      onClick={onClick}
-      className="rounded-2xl p-4 flex items-center gap-4 cursor-pointer opacity-40"
-      style={{ backgroundColor: '#0d2318', border: '1px dashed #1a3a20' }}
+    <div 
+      onClick={onUnlock}
+      className="bg-slate-50/50 rounded-[2rem] border border-dashed border-slate-200 p-5 flex flex-col items-center justify-center text-center opacity-75 hover:opacity-100 transition-opacity cursor-pointer aspect-[4/5] min-h-[230px]"
     >
-      <div
-        className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0"
-        style={{ backgroundColor: '#1a3a20' }}
-      >
-        🔒
-      </div>
-      <div>
-        <p className="font-semibold text-white text-sm">Espacio Premium</p>
-        <p className="text-xs mt-0.5" style={{ color: '#6b9e6e' }}>Activa Premium para usar</p>
-      </div>
+      <span className="text-xl mb-2">🔒</span>
+      <p className="font-black text-slate-400 text-xs tracking-tight">Premium</p>
+      <p className="text-[9px] text-slate-300 mt-0.5 font-bold">Slot bloqueado</p>
     </div>
   )
 }
 
 export default function MiHuerto() {
   const { user } = useAuth()
-  const navigate = useNavigate()
 
   const [spaces, setSpaces] = useState<Space[]>([])
+  const [plants, setPlants] = useState<Plant[]>([])
   const [isPremium, setIsPremium] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [showUpgrade, setShowUpgrade] = useState(false)
-  const [isUpgrading, setIsUpgrading] = useState(false)
-  const [lastSync, setLastSync] = useState<string | null>(null)
-  
-  // NUEVO: Estado para almacenar el nombre completo dinámico
   const [fullName, setFullName] = useState('')
+  const [isRedirecting, setIsRedirecting] = useState(false) // ← Estado de carga para Stripe
+
+  // Modales
+  const [assigningToSpaceId, setAssigningToSpaceId] = useState<number | null>(null)
+  const [availableSensors, setAvailableSensors] = useState<{ id: number; name: string }[]>([])
+  const [plantModalSpace, setPlantModalSpace] = useState<Space | null>(null)
+  const [selectedPlantId, setSelectedPlantId] = useState<number | null>(null)
+
+  // Toast
+  const [showToast, setShowToast] = useState(false)
 
   const initialized = useRef(false)
 
@@ -187,36 +190,34 @@ export default function MiHuerto() {
 
   const loadData = async () => {
     if (!user) return
-
     try {
-      // 1. Obtener la configuración Premium
       const { data: settings } = await supabase
         .from('user_settings')
         .select('is_premium')
         .eq('id', user.id)
         .single()
 
-      const premium = settings?.is_premium ?? false
-      setIsPremium(premium)
+      setIsPremium(settings?.is_premium ?? false)
 
-      // NUEVO: 2. Consultar el Perfil para traer el full_name del usuario
       const { data: profileData } = await supabase
         .from('profiles')
         .select('full_name')
         .eq('id', user.id)
         .single()
 
-      if (profileData?.full_name) {
-        setFullName(profileData.full_name)
-      } else {
-        // Fallback: Si no tiene nombre guardado aún, mostramos el alias del correo
-        setFullName(user.email?.split('@')[0] ?? 'Usuario')
-      }
+      setFullName(profileData?.full_name ?? user.email?.split('@')[0] ?? 'Usuario')
 
-      // 3. Obtener Espacios de cultivo
+      // Catálogo
+      const { data: plantsData } = await supabase
+        .from('plant_catalog')
+        .select('*')
+        .order('name')
+      setPlants(plantsData ?? [])
+
+      // Espacios
       let { data, error } = await supabase
         .from('spaces')
-        .select(`*, plant_catalog (name, emoji), sensors (id, active)`)
+        .select(`*, plant_catalog (id, name, emoji), sensors (id, name, active)`)
         .eq('user_id', user.id)
         .order('slot_number')
 
@@ -232,7 +233,7 @@ export default function MiHuerto() {
         await supabase.from('spaces').insert(defaultSpaces)
         const { data: newData } = await supabase
           .from('spaces')
-          .select(`*, plant_catalog (name, emoji), sensors (id, active)`)
+          .select(`*, plant_catalog (id, name, emoji), sensors (id, name, active)`)
           .eq('user_id', user.id)
           .order('slot_number')
         data = newData
@@ -264,349 +265,305 @@ export default function MiHuerto() {
           }
         })
       )
-
       setSpaces(enriched)
-
-      // ÚLTIMA SINCRONIZACIÓN REAL
-      const allSensorIds = enriched
-        .filter(s => s.sensors && s.sensors.length > 0)
-        .map(s => s.sensors![0].id)
-
-      if (allSensorIds.length > 0) {
-        const { data: lastReading } = await supabase
-          .from('readings')
-          .select('recorded_at')
-          .in('sensor_id', allSensorIds)
-          .order('recorded_at', { ascending: false })
-          .limit(1)
-          .single()
-
-        if (lastReading) {
-          setLastSync(lastReading.recorded_at)
-        }
-      }
-
     } catch (err) {
-      console.error('Error:', err)
+      console.error(err)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleUpgrade = async () => {
-    if (!user || isUpgrading) return
-    setIsUpgrading(true)
-    try {
-      const result = await handlePurchase(user.id, user.email ?? '')
-      if (result.success) {
-        setIsPremium(true)
-        setShowUpgrade(false)
-        alert('¡Bienvenido a Premium! 🎉')
-      }
-    } catch (error: any) {
-      alert('Error al procesar el pago: ' + error.message)
-    } finally {
-      setIsUpgrading(false)
-    }
+  // Sensores
+  const fetchAvailableSensors = async () => {
+    const { data } = await supabase
+      .from('sensors')
+      .select('id, name')
+      .is('space_id', null)
+    setAvailableSensors(data ?? [])
   }
 
-  // Helper para generar las iniciales dinámicas para el Avatar circular
-  const getInitials = () => {
-    if (fullName) {
-      return fullName
-        .split(' ')
-        .map(n => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2)
+  const handleOpenAssignModal = async (spaceId: number) => {
+    setAssigningToSpaceId(spaceId)
+    await fetchAvailableSensors()
+  }
+
+  const handleAssignSensor = async (sensorId: number) => {
+    if (!assigningToSpaceId) return
+    await supabase
+      .from('sensors')
+      .update({ space_id: assigningToSpaceId })
+      .eq('id', sensorId)
+    
+    setAssigningToSpaceId(null)
+    loadData()
+  }
+
+  const handleRemoveSensor = async (sensorId: number) => {
+    if (!sensorId) return
+    const confirm = window.confirm('¿Desvincular este sensor de este espacio?')
+    if (!confirm) return
+    
+    const { error } = await supabase
+      .from('sensors')
+      .update({ space_id: null })
+      .eq('id', sensorId)
+
+    if (error) {
+      console.error('Error desvinculando sensor:', error)
+    } else {
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 3000)
     }
-    return '?'
+    loadData()
+  }
+
+  // Guardar planta
+  const handleOpenPlantModal = (space: Space) => {
+    setPlantModalSpace(space)
+    setSelectedPlantId(space.plant_id)
+  }
+
+  const handleSavePlant = async () => {
+    if (!plantModalSpace) return
+    await supabase
+      .from('spaces')
+      .update({ plant_id: selectedPlantId })
+      .eq('id', plantModalSpace.id)
+
+    setPlantModalSpace(null)
+    
+    setShowToast(true)
+    setTimeout(() => {
+      setShowToast(false)
+    }, 3000)
+
+    loadData()
+  }
+
+  const handleStripeCheckout = async () => {
+    if (!user || !user.email) return
+    try {
+      setIsRedirecting(true)
+      await handlePurchase(user.id, user.email)
+    } catch (err) {
+      console.error('Error al redirigir a Stripe:', err)
+    } finally {
+      setIsRedirecting(false)
+    }
   }
 
   const activeCount = spaces.filter(s => s.plant_id !== null).length
   const alertCount = spaces.reduce((acc, s) => acc + (s.unacknowledged_alerts ?? 0), 0)
-  const healthyCount = spaces.filter(s => s.plant_id && (s.unacknowledged_alerts ?? 0) === 0 && s.sensors && s.sensors.length > 0).length
-  const avgHumidity = spaces.filter(s => s.latest_reading).length > 0
-    ? Math.round(spaces.filter(s => s.latest_reading).reduce((acc, s) => acc + (s.latest_reading?.humidity ?? 0), 0) / spaces.filter(s => s.latest_reading).length)
-    : null
-  const avgTemp = spaces.filter(s => s.latest_reading).length > 0
-    ? Math.round(spaces.filter(s => s.latest_reading).reduce((acc, s) => acc + (s.latest_reading?.temperature ?? 0), 0) / spaces.filter(s => s.latest_reading).length)
-    : null
+  const healthyCount = spaces.filter(s => s.plant_id && (s.unacknowledged_alerts ?? 0) === 0).length
 
   const visibleSpaces = spaces.slice(0, FREE_LIMIT)
   const lockedSpaces = spaces.slice(FREE_LIMIT)
 
   if (loading) {
     return (
-      <div className="space-y-4 p-5">
-        <div className="h-32 rounded-2xl animate-pulse" style={{ backgroundColor: '#0d2318' }} />
-        <div className="space-y-3">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-20 rounded-2xl animate-pulse" style={{ backgroundColor: '#0d2318' }} />
-          ))}
+      <div className="w-full bg-[#f4f7f5]/40 min-h-screen px-5 pt-6 space-y-4">
+        <div className="h-6 w-1/3 bg-slate-100 rounded-lg animate-pulse" />
+        <div className="grid grid-cols-2 gap-4 pt-4">
+          {[...Array(4)].map((_, i) => <div key={i} className="h-44 bg-white rounded-[2rem] animate-pulse border border-slate-100" />)}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-5">
-
-      {/* HEADER */}
-      <div
-        className="rounded-2xl p-4"
-        style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            {/* AVATAR DINÁMICO */}
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm"
-              style={{ backgroundColor: '#1a3a20', color: '#a3d9a5' }}
-            >
-              {getInitials()}
-            </div>
-            <div>
-              {/* NOMBRE DINÁMICO */}
-              <p className="font-bold text-white text-sm">
-                Hola, {fullName}
-              </p>
-              <p className="text-xs" style={{ color: '#6b9e6e' }}>
-                {activeCount > 0
-                  ? `${healthyCount} cultivos están estables hoy`
-                  : 'Bienvenido a tu huerto'}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {isPremium ? (
-              <span
-                className="text-xs font-bold px-3 py-1 rounded-full"
-                style={{ backgroundColor: '#3a2a00', color: '#fbbf24', border: '1px solid #b45309' }}
-              >
-                ⭐ Premium
-              </span>
-            ) : (
-              <button
-                onClick={() => setShowUpgrade(true)}
-                className="text-xs font-bold px-3 py-1 rounded-full transition"
-                style={{ backgroundColor: '#1a3a20', color: '#4ade80', border: '1px solid #2d6a35' }}
-              >
-                🔓 Free
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* DASHBOARD IOT LABEL */}
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-xs font-mono uppercase tracking-widest" style={{ color: '#4a6a4a' }}>
-            Dashboard IoT
+    <div className="w-full bg-[#f4f7f5]/40 min-h-screen px-5 pt-6 space-y-5 max-w-md mx-auto pb-10 font-sans text-slate-800 relative">
+      
+      {/* Toast de Éxito */}
+      {showToast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-xs bg-[#e2faee] border border-emerald-200 text-slate-800 rounded-xl px-4 py-3 flex items-center gap-2.5 shadow-md">
+          <span className="text-emerald-600 bg-white w-5 h-5 rounded-md flex items-center justify-center font-bold text-xs border border-emerald-100">
+            ✓
           </span>
+          <span className="text-xs font-bold text-[#006642]">Espacio actualizado</span>
         </div>
+      )}
 
-        <h2 className="text-xl font-bold text-white mb-3">
-          Monitoreo inteligente para cada espacio de tu huerto
-        </h2>
+      {/* BIENVENIDA */}
+      <div className="space-y-1">
+        <h1 className="text-2xl font-black text-[#1e293b] flex items-center gap-1.5 tracking-tight">
+          ¡Hola, {fullName}! <span className="inline-block">👋</span>
+        </h1>
+        <p className="text-xs text-slate-400 font-semibold">
+          Asigna plantas a los espacios para empezar
+        </p>
+      </div>
 
-        {/* SYNC REAL */}
-        <div
-          className="flex items-center gap-2 text-xs rounded-xl px-3 py-2 mb-4"
-          style={{ backgroundColor: '#0a1a0f', color: lastSync ? '#4ade80' : '#6b9e6e' }}
-        >
-          <span>●</span>
-          <span>
-            {lastSync
-              ? `Sincronizado ${timeAgoSync(lastSync)}`
-              : 'Sin lecturas registradas aún'}
-          </span>
-        </div>
-
-        {/* STATS */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl p-3" style={{ backgroundColor: '#0a1a0f' }}>
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-lg mb-2"
-              style={{ backgroundColor: '#1a3a20' }}
-            >
-              🌱
-            </div>
-            <p className="text-3xl font-bold text-white">
-              {String(activeCount).padStart(2, '0')}
-            </p>
-            <p className="text-xs font-medium mt-1" style={{ color: '#a3d9a5' }}>
-              Plantas registradas
-            </p>
-            <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
-              {healthyCount} saludables · {alertCount} requieren atención
-            </p>
+      {/* PLAN PREMIUM DINÁMICO */}
+      <div>
+        {isPremium ? (
+          <div className="inline-flex items-center gap-1.5 bg-[#ff9100] text-white font-black text-[11px] px-4 py-1.5 rounded-xl shadow-xs">
+            👑 Plan Premium
           </div>
-
-          <div className="rounded-xl p-3" style={{ backgroundColor: '#0a1a0f' }}>
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-lg mb-2"
-              style={{ backgroundColor: '#1a3a20' }}
-            >
-              💧
-            </div>
-            <p className="text-3xl font-bold text-white">
-              {avgHumidity !== null ? `${avgHumidity}%` : '--'}
-            </p>
-            <p className="text-xs font-medium mt-1" style={{ color: '#a3d9a5' }}>
-              Humedad promedio
-            </p>
-            <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
-              {avgHumidity !== null && avgHumidity >= 50 && avgHumidity <= 80
-                ? 'Rango ideal para cultivo activo'
-                : avgHumidity !== null ? 'Fuera del rango ideal' : 'Sin datos'}
-            </p>
-          </div>
-
-          <div className="rounded-xl p-3" style={{ backgroundColor: '#0a1a0f' }}>
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-lg mb-2"
-              style={{ backgroundColor: '#1a3a20' }}
-            >
-              🌡️
-            </div>
-            <p className="text-3xl font-bold text-white">
-              {avgTemp !== null ? `${avgTemp}°` : '--'}
-            </p>
-            <p className="text-xs font-medium mt-1" style={{ color: '#a3d9a5' }}>
-              Temperatura
-            </p>
-            <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
-              {avgTemp !== null && avgTemp >= 18 && avgTemp <= 30
-                ? 'Invernadero estable'
-                : avgTemp !== null ? 'Revisar temperatura' : 'Sin datos'}
-            </p>
-          </div>
-
-          <div
-            className="rounded-xl p-3"
-            style={{
-              backgroundColor: alertCount > 0 ? '#1a0a0a' : '#0a1a0f',
-              border: alertCount > 0 ? '1px solid #5a1a1a' : 'none'
-            }}
+        ) : (
+          <button
+            onClick={handleStripeCheckout}
+            disabled={isRedirecting}
+            className="inline-flex items-center gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black text-[11px] px-4 py-1.5 rounded-xl shadow-xs transition transform active:scale-95 hover:from-emerald-600 hover:to-teal-700 cursor-pointer disabled:opacity-50"
           >
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-lg mb-2"
-              style={{ backgroundColor: alertCount > 0 ? '#3a1a1a' : '#1a3a20' }}
-            >
-              🔔
-            </div>
-            <p className={`text-3xl font-bold ${alertCount > 0 ? 'text-red-400' : 'text-white'}`}>
-              {String(alertCount).padStart(2, '0')}
-            </p>
-            <p className="text-xs font-medium mt-1" style={{ color: alertCount > 0 ? '#f87171' : '#a3d9a5' }}>
-              Alertas activas
-            </p>
-            <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
-              {alertCount > 0
-                ? `${alertCount} crítico · ${spaces.filter(s => !s.sensors?.length).length} sensor desconectado`
-                : 'Todo en orden'}
-            </p>
+            {isRedirecting ? '⚡ Cargando...' : '⚡ Obtener Premium'}
+          </button>
+        )}
+      </div>
+
+      {/* CONTADORES */}
+      <div className="grid grid-cols-3 gap-2.5">
+        <div className="bg-white rounded-2xl p-2.5 border border-slate-100 flex items-center gap-2 shadow-3xs">
+          <div className="w-8 h-8 rounded-xl bg-[#e2faee] text-[#009660] flex items-center justify-center text-base shrink-0">
+            🌱
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-black text-slate-800 leading-none">{healthyCount}</p>
+            <p className="text-[10px] text-slate-400 font-bold mt-1">Bien</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-2.5 border border-slate-100 flex items-center gap-2 shadow-3xs">
+          <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-base shrink-0">
+            ⚠️
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-black text-slate-800 leading-none">{alertCount}</p>
+            <p className="text-[10px] text-slate-400 font-bold mt-1">Alertas</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-2.5 border border-slate-100 flex items-center gap-2 shadow-3xs">
+          <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center text-base shrink-0">
+            🏠
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-black text-slate-800 leading-none">{activeCount}</p>
+            <p className="text-[10px] text-slate-400 font-bold mt-1">Plantas</p>
           </div>
         </div>
       </div>
 
-      {/* ESPACIOS */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-white">Espacios del huerto</h2>
-          <button
-            onClick={() => navigate('/espacios/nuevo')}
-            className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full transition"
-            style={{ backgroundColor: '#1a3a20', color: '#4ade80' }}
-          >
-            <span>+</span> Agregar espacio
-          </button>
+      {/* MIS ESPACIOS */}
+      <div className="space-y-3 pt-1">
+        <div className="flex items-center justify-between pl-1">
+          <h3 className="font-extrabold text-[#1e293b] text-sm flex items-center gap-1.5">
+            🌻 Mis espacios
+          </h3>
+          <span className="text-[10px] text-slate-400 font-black tracking-wide">
+            {activeCount}/{isPremium ? PREMIUM_LIMIT : FREE_LIMIT} ocupados
+          </span>
         </div>
 
-        <div className="space-y-3">
+        {/* CUADRÍCULA DE ESPACIOS */}
+        <div className="grid grid-cols-2 gap-4">
           {visibleSpaces.map(space => (
             <SpaceCard
               key={space.id}
               space={space}
-              onClick={() => navigate(`/espacios/${space.id}`)}
+              onAssignSensor={() => handleOpenAssignModal(space.id)}
+              onRemoveSensor={(id) => handleRemoveSensor(id)}
+              onOpenPlantModal={() => handleOpenPlantModal(space)}
             />
           ))}
 
           {!isPremium && lockedSpaces.map(space => (
-            <LockedSpaceCard
-              key={space.id}
-              onClick={() => setShowUpgrade(true)}
-            />
+            <LockedSpaceCard key={space.id} onUnlock={handleStripeCheckout} />
           ))}
 
           {isPremium && lockedSpaces.map(space => (
             <SpaceCard
               key={space.id}
               space={space}
-              onClick={() => navigate(`/espacios/${space.id}`)}
+              onAssignSensor={() => handleOpenAssignModal(space.id)}
+              onRemoveSensor={(id) => handleRemoveSensor(id)}
+              onOpenPlantModal={() => handleOpenPlantModal(space)}
             />
           ))}
         </div>
       </div>
 
-      {/* MODAL UPGRADE */}
-      {showUpgrade && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center p-4">
-          <div
-            className="rounded-2xl w-full max-w-sm p-6 space-y-4"
-            style={{ backgroundColor: '#0f2317', border: '1px solid #1a3a20' }}
-          >
-            <div className="text-center">
-              <p className="text-5xl mb-3">⭐</p>
-              <h2 className="text-xl font-bold text-white">Desbloquea Premium</h2>
-              <p className="text-sm mt-1" style={{ color: '#6b9e6e' }}>
-                Accede a todos los espacios de tu huerto
-              </p>
+      {/* MODAL ASIGNAR PLANTA */}
+      {plantModalSpace && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="w-full max-w-sm bg-white rounded-[2rem] overflow-hidden shadow-2xl border border-slate-100 p-6 space-y-5">
+            
+            <div className="flex items-center justify-between pb-1">
+              <h3 className="font-black text-sm text-slate-800 flex items-center gap-2">
+                🌱 Asignar planta — {plantModalSpace.name}
+              </h3>
+              <button
+                onClick={() => setPlantModalSpace(null)}
+                className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 font-bold text-xs"
+              >
+                ✕
+              </button>
             </div>
 
-            <div className="space-y-2">
-              {[
-                '🏡 8 espacios de cultivo',
-                '📡 Sensores ilimitados',
-                '📊 Historial completo',
-                '🔔 Alertas en Telegram',
-                '🤖 Asistente IA HuertoBot',
-                '🧪 Simulador avanzado',
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm text-slate-300">
-                  <span className="text-green-400">✓</span>
-                  {item}
-                </div>
-              ))}
-            </div>
-
-            <div
-              className="rounded-xl p-4 text-center"
-              style={{ backgroundColor: '#0a1a0f' }}
-            >
-              <p className="text-xs text-slate-400 mb-1">Incluido con la compra del sensor</p>
-              <p className="text-2xl font-bold text-amber-400">Kit Mi Huerto</p>
-              <p className="text-xs text-slate-400 mt-1">
-                Actívate automáticamente al registrar tu sensor
-              </p>
+            <div className="relative">
+              <select
+                value={selectedPlantId ?? ''}
+                onChange={e => setSelectedPlantId(Number(e.target.value) || null)}
+                className="w-full bg-white border border-[#4ade80] text-slate-700 rounded-xl px-4 py-3 outline-none text-xs font-extrabold appearance-none cursor-pointer shadow-3xs"
+              >
+                <option value="">Seleccionar planta...</option>
+                {plants.map(plant => (
+                  <option key={plant.id} value={plant.id}>
+                    {plant.emoji} {plant.name}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                </svg>
+              </div>
             </div>
 
             <button
-              onClick={handleUpgrade}
-              disabled={isUpgrading}
-              className="w-full text-white font-bold py-3 rounded-xl transition disabled:opacity-50"
-              style={{ backgroundColor: '#2d6a35' }}
+              onClick={handleSavePlant}
+              className="w-full text-white font-extrabold rounded-xl py-3 text-xs bg-[#10b981] hover:bg-[#059669] transition-colors shadow-3xs"
             >
-              {isUpgrading ? '⏳ Procesando...' : '🛒 Comprar Kit Premium'}
+              Guardar
             </button>
+          </div>
+        </div>
+      )}
 
-            <button
-              onClick={() => setShowUpgrade(false)}
-              className="w-full py-3 rounded-xl transition text-sm"
-              style={{ backgroundColor: '#0a1a0f', color: '#6b9e6e', border: '1px solid #1a3a20' }}
-            >
-              Cerrar
-            </button>
+      {/* MODAL CONECTAR SENSOR */}
+      {assigningToSpaceId && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="w-full max-w-xs bg-white rounded-[2rem] overflow-hidden shadow-2xl border border-slate-100 p-5 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="font-black text-xs text-slate-800">📡 Conectar Sensor</h3>
+              <button
+                onClick={() => setAssigningToSpaceId(null)}
+                className="w-6 h-6 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 font-bold text-xs"
+              >
+                ✕
+              </button>
+            </div>
+
+            {availableSensors.length === 0 ? (
+              <div className="text-center py-4 space-y-2">
+                <p className="text-2xl">📡</p>
+                <p className="text-[10px] text-slate-400 font-bold leading-normal">
+                  No hay sensores libres actualmente.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
+                {availableSensors.map(sensor => (
+                  <button
+                    key={sensor.id}
+                    onClick={() => handleAssignSensor(sensor.id)}
+                    className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#f8faf9] border border-slate-100 text-left hover:border-emerald-300 transition-colors"
+                  >
+                    <span className="text-[11px] font-bold text-slate-700">{sensor.name}</span>
+                    <span className="text-[#009660] font-black text-[10px]">Asignar ›</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

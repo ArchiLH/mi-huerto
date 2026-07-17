@@ -120,11 +120,12 @@ export default function Reportes() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="h-48 rounded-2xl animate-pulse" style={{ backgroundColor: '#0d2318' }} />
+      <div className="w-full bg-white px-5 pt-6 space-y-4">
+        <div className="h-6 w-1/3 bg-slate-100 rounded-lg animate-pulse" />
+        <div className="h-24 bg-slate-50 rounded-2xl animate-pulse border border-slate-100" />
         <div className="grid grid-cols-2 gap-3">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-28 rounded-2xl animate-pulse" style={{ backgroundColor: '#0d2318' }} />
+            <div key={i} className="h-28 bg-slate-50 rounded-2xl animate-pulse border border-slate-100" />
           ))}
         </div>
       </div>
@@ -132,37 +133,26 @@ export default function Reportes() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="w-full bg-white text-slate-800 font-sans px-5 pt-6 space-y-5 max-w-md mx-auto pb-10">
 
-      {/* HEADER */}
-      <div
-        className="rounded-2xl p-5"
-        style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-      >
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-mono uppercase tracking-widest" style={{ color: '#4a6a4a' }}>
-            Analytics IoT
-          </span>
-          <span
-            className="text-xs px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: '#0a2a10', color: '#4ade80' }}
-          >
-            ● En vivo
+      {/* HEADER LIMPIO */}
+      <div className="space-y-1">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-black text-[#1e293b] tracking-tight">
+            Panel de control
+          </h1>
+          <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+            En vivo
           </span>
         </div>
-        <h1 className="text-xl font-bold text-white mb-1">
-          Panel de control
-        </h1>
-        <p className="text-sm" style={{ color: '#6b9e6e' }}>
-          Análisis en tiempo real de tu huerto
+        <p className="text-xs text-slate-400 font-medium leading-relaxed">
+          Análisis en tiempo real y estadísticas generales de tu huerto
         </p>
       </div>
 
-      {/* TABS */}
-      <div
-        className="flex rounded-xl p-1 gap-1"
-        style={{ backgroundColor: '#0d2318' }}
-      >
+      {/* TABS MINIMALISTAS */}
+      <div className="flex bg-slate-100/70 p-1 rounded-xl border border-slate-200/30">
         {[
           { key: 'resumen', label: '📊 Resumen' },
           { key: 'plantas', label: '🌿 Plantas' },
@@ -171,11 +161,11 @@ export default function Reportes() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key as any)}
-            className="flex-1 py-2 rounded-lg text-xs font-medium transition"
-            style={{
-              backgroundColor: activeTab === tab.key ? '#2d6a35' : 'transparent',
-              color: activeTab === tab.key ? 'white' : '#6b9e6e',
-            }}
+            className={`flex-1 text-center py-2 rounded-lg text-xs font-bold transition-all ${
+              activeTab === tab.key
+                ? 'bg-white text-[#008f51] shadow-2xs'
+                : 'text-slate-400 hover:text-slate-600'
+            }`}
           >
             {tab.label}
           </button>
@@ -184,165 +174,95 @@ export default function Reportes() {
 
       {/* TAB: RESUMEN */}
       {activeTab === 'resumen' && stats && (
-        <div className="space-y-3">
+        <div className="space-y-3.5">
 
-          {/* FILA 1 */}
+          {/* TOTAL PLANTAS Y ALERTAS ACTIVAS */}
           <div className="grid grid-cols-2 gap-3">
-            <div
-              className="rounded-2xl p-4"
-              style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-            >
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
-                style={{ backgroundColor: '#1a3a20' }}
-              >
+            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-3xs flex flex-col justify-between">
+              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-xl flex items-center justify-center mb-3">
                 🌱
               </div>
-              <p className="text-3xl font-bold text-white">
-                {String(stats.totalPlants).padStart(2, '0')}
-              </p>
-              <p className="text-xs font-medium mt-1" style={{ color: '#a3d9a5' }}>
-                Plantas activas
-              </p>
-              <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
-                {stats.healthySpaces} saludables
-              </p>
+              <div>
+                <p className="text-2xl font-black text-slate-800 leading-none">
+                  {String(stats.totalPlants).padStart(2, '0')}
+                </p>
+                <p className="text-[11px] font-bold text-slate-700 mt-1.5">Plantas activas</p>
+                <p className="text-[10px] text-slate-400 font-medium mt-0.5">{stats.healthySpaces} saludables</p>
+              </div>
             </div>
 
-            <div
-              className="rounded-2xl p-4"
-              style={{
-                backgroundColor: stats.totalAlerts > 0 ? '#1a0808' : '#0d2318',
-                border: `1px solid ${stats.totalAlerts > 0 ? '#5a1a1a' : '#1a3a20'}`
-              }}
-            >
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
-                style={{ backgroundColor: stats.totalAlerts > 0 ? '#3a1010' : '#1a3a20' }}
-              >
+            <div className={`bg-white rounded-2xl p-4 border flex flex-col justify-between transition-all ${
+              stats.totalAlerts > 0 ? 'border-red-200 shadow-xs' : 'border-slate-100 shadow-3xs'
+            }`}>
+              <div className={`w-9 h-9 rounded-xl text-xl flex items-center justify-center mb-3 ${
+                stats.totalAlerts > 0 ? 'bg-red-50' : 'bg-slate-50'
+              }`}>
                 🔔
               </div>
-              <p className={`text-3xl font-bold ${stats.totalAlerts > 0 ? 'text-red-400' : 'text-white'}`}>
-                {String(stats.totalAlerts).padStart(2, '0')}
-              </p>
-              <p className="text-xs font-medium mt-1" style={{ color: stats.totalAlerts > 0 ? '#f87171' : '#a3d9a5' }}>
-                Alertas activas
-              </p>
-              <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
-                {stats.totalAlerts > 0 ? 'Requieren atención' : 'Todo en orden'}
-              </p>
+              <div>
+                <p className={`text-2xl font-black leading-none ${stats.totalAlerts > 0 ? 'text-red-500' : 'text-slate-800'}`}>
+                  {String(stats.totalAlerts).padStart(2, '0')}
+                </p>
+                <p className="text-[11px] font-bold text-slate-700 mt-1.5">Alertas activas</p>
+                <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                  {stats.totalAlerts > 0 ? 'Requieren atención' : 'Todo en orden'}
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* FILA 2 */}
+          {/* TEMPERATURA Y HUMEDAD PROMEDIO */}
           <div className="grid grid-cols-2 gap-3">
-            <div
-              className="rounded-2xl p-4"
-              style={{
-                backgroundColor: stats.avgTemp > 35 ? '#1a0808' : '#0d2318',
-                border: `1px solid ${stats.avgTemp > 35 ? '#5a1a1a' : '#1a3a20'}`
-              }}
-            >
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
-                style={{ backgroundColor: '#1a3a20' }}
-              >
-                🌡️
+            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-3xs flex flex-col justify-between">
+              <div className="w-9 h-9 rounded-xl bg-orange-50 text-xl flex items-center justify-center mb-3">
+                淡淡 🌡️
               </div>
-              <p className={`text-3xl font-bold ${stats.avgTemp > 35 ? 'text-red-400' : 'text-white'}`}>
-                {stats.avgTemp.toFixed(0)}°
-              </p>
-              <p className="text-xs font-medium mt-1" style={{ color: '#a3d9a5' }}>
-                Temperatura prom.
-              </p>
-              <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
-                {stats.avgTemp >= 18 && stats.avgTemp <= 30 ? 'Rango ideal' : 'Fuera de rango'}
-              </p>
+              <div>
+                <p className="text-2xl font-black text-slate-800 prefix-degree leading-none">
+                  {stats.avgTemp.toFixed(0)}°C
+                </p>
+                <p className="text-[11px] font-bold text-slate-700 mt-1.5">Temperatura prom.</p>
+                <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                  {stats.avgTemp >= 18 && stats.avgTemp <= 30 ? 'Rango ideal ✅' : 'Fuera de rango'}
+                </p>
+              </div>
             </div>
 
-            <div
-              className="rounded-2xl p-4"
-              style={{
-                backgroundColor: stats.avgHumidity < 30 ? '#1a1208' : '#0d2318',
-                border: `1px solid ${stats.avgHumidity < 30 ? '#5a3a10' : '#1a3a20'}`
-              }}
-            >
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
-                style={{ backgroundColor: '#1a3a20' }}
-              >
+            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-3xs flex flex-col justify-between">
+              <div className="w-9 h-9 rounded-xl bg-blue-50 text-xl flex items-center justify-center mb-3">
                 💧
               </div>
-              <p className={`text-3xl font-bold ${stats.avgHumidity < 30 ? 'text-yellow-400' : 'text-white'}`}>
-                {stats.avgHumidity.toFixed(0)}%
-              </p>
-              <p className="text-xs font-medium mt-1" style={{ color: '#a3d9a5' }}>
-                Humedad prom.
-              </p>
-              <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
-                {stats.avgHumidity >= 50 && stats.avgHumidity <= 80 ? 'Nivel óptimo' : 'Revisar riego'}
-              </p>
+              <div>
+                <p className="text-2xl font-black text-slate-800 leading-none">
+                  {stats.avgHumidity.toFixed(0)}%
+                </p>
+                <p className="text-[11px] font-bold text-slate-700 mt-1.5">Humedad prom.</p>
+                <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                  {stats.avgHumidity >= 50 && stats.avgHumidity <= 80 ? 'Nivel óptimo ✅' : 'Revisar riego'}
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* FILA 3 */}
+          {/* ESPACIOS FUNCIONANDO BIEN VS CRÍTICOS */}
           <div className="grid grid-cols-2 gap-3">
-            <div
-              className="rounded-2xl p-4"
-              style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-            >
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
-                style={{ backgroundColor: '#1a3a20' }}
-              >
-                ✅
-              </div>
-              <p className="text-3xl font-bold text-green-400">
-                {String(stats.healthySpaces).padStart(2, '0')}
-              </p>
-              <p className="text-xs font-medium mt-1" style={{ color: '#a3d9a5' }}>
-                Espacios ok
-              </p>
-              <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
-                Funcionando bien
-              </p>
+            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-3xs">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Espacios Estables</p>
+              <p className="text-2xl font-black text-emerald-600 mt-1">{String(stats.healthySpaces).padStart(2, '0')}</p>
             </div>
-
-            <div
-              className="rounded-2xl p-4"
-              style={{
-                backgroundColor: stats.warningSpaces > 0 ? '#1a1208' : '#0d2318',
-                border: `1px solid ${stats.warningSpaces > 0 ? '#5a3a10' : '#1a3a20'}`
-              }}
-            >
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
-                style={{ backgroundColor: stats.warningSpaces > 0 ? '#3a2a10' : '#1a3a20' }}
-              >
-                ⚠️
-              </div>
-              <p className={`text-3xl font-bold ${stats.warningSpaces > 0 ? 'text-amber-400' : 'text-white'}`}>
+            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-3xs">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Con Problemas</p>
+              <p className={`text-2xl font-black mt-1 ${stats.warningSpaces > 0 ? 'text-amber-500' : 'text-slate-400'}`}>
                 {String(stats.warningSpaces).padStart(2, '0')}
               </p>
-              <p className="text-xs font-medium mt-1" style={{ color: '#a3d9a5' }}>
-                Con alertas
-              </p>
-              <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>
-                {stats.warningSpaces > 0 ? 'Requieren revisión' : 'Sin problemas'}
-              </p>
             </div>
           </div>
 
-          {/* BOTÓN ALERTAS */}
+          {/* BOTÓN GENERAL DE ALERTA AL DETALLE */}
           {stats.totalAlerts > 0 && (
             <button
               onClick={() => navigate('/alertas')}
-              className="w-full py-3 rounded-2xl text-sm font-medium transition"
-              style={{
-                backgroundColor: '#1a0808',
-                border: '1px solid #5a1a1a',
-                color: '#f87171'
-              }}
+              className="w-full py-3 rounded-xl text-xs font-bold bg-red-50 text-red-600 border border-red-200/60 hover:bg-red-100 transition shadow-3xs"
             >
               ⚠️ Ver {stats.totalAlerts} alerta{stats.totalAlerts !== 1 ? 's' : ''} pendiente{stats.totalAlerts !== 1 ? 's' : ''}
             </button>
@@ -354,17 +274,10 @@ export default function Reportes() {
       {activeTab === 'plantas' && (
         <div className="space-y-3">
           {spaceStats.filter(s => s.plant_name !== '').length === 0 ? (
-            <div
-              className="rounded-2xl p-10 text-center"
-              style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-            >
+            <div className="bg-white rounded-[2rem] border-2 border-dashed border-slate-200 p-10 text-center py-14">
               <p className="text-4xl mb-3">🌱</p>
-              <p style={{ color: '#6b9e6e' }}>No tienes plantas registradas</p>
-              <button
-                onClick={() => navigate('/')}
-                className="mt-3 text-sm"
-                style={{ color: '#4ade80' }}
-              >
+              <p className="text-xs text-slate-400 font-bold">No tienes plantas registradas</p>
+              <button onClick={() => navigate('/')} className="mt-3 text-xs text-emerald-600 font-bold">
                 Ir a Mi Huerto
               </button>
             </div>
@@ -372,60 +285,50 @@ export default function Reportes() {
             spaceStats.filter(s => s.plant_name !== '').map((s, i) => (
               <div
                 key={i}
-                className="rounded-2xl p-4"
-                style={{
-                  backgroundColor: s.status === 'warning' ? '#1a0808' : '#0d2318',
-                  border: `1px solid ${s.status === 'warning' ? '#5a1a1a' : '#1a3a20'}`
-                }}
+                className={`bg-white rounded-2xl p-4 border transition-all shadow-3xs ${
+                  s.status === 'warning' ? 'border-red-200 bg-red-50/5' : 'border-slate-100'
+                }`}
               >
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0"
-                    style={{ backgroundColor: '#1a3a20' }}
-                  >
+                  <div className="w-11 h-11 rounded-xl bg-slate-50 flex items-center justify-center text-xl shrink-0 border border-slate-100">
                     {s.plant_emoji}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="font-bold text-white truncate">{s.plant_name}</p>
-                      <span
-                        className="text-xs px-2 py-0.5 rounded-full shrink-0 ml-2"
-                        style={{
-                          backgroundColor: s.status === 'ok' ? '#0a2a10' :
-                            s.status === 'warning' ? '#2a0a0a' : '#1a2a1a',
-                          color: s.status === 'ok' ? '#4ade80' :
-                            s.status === 'warning' ? '#f87171' : '#6b9e6e'
-                        }}
-                      >
-                        {s.status === 'ok' ? '✅ Saludable' :
-                          s.status === 'warning' ? `⚠️ ${s.alerts} alerta${s.alerts !== 1 ? 's' : ''}` :
-                          '📡 Sin sensor'}
+                    <div className="flex items-center justify-between mb-0.5">
+                      <p className="font-bold text-xs text-slate-800 truncate">{s.plant_name}</p>
+                      <span className={`text-[10px] font-bold px-2 py-0.2 rounded-full shrink-0 ${
+                        s.status === 'ok' ? 'bg-emerald-50 text-emerald-600' :
+                        s.status === 'warning' ? 'bg-red-50 text-red-500' : 'bg-slate-50 text-slate-400'
+                      }`}>
+                        {s.status === 'ok' ? 'Saludable' :
+                          s.status === 'warning' ? `⚠️ Alerta` : 'Sin datos'}
                       </span>
                     </div>
-                    <p className="text-xs mb-1" style={{ color: '#4a6a4a' }}>{s.name}</p>
+                    <p className="text-[10px] text-slate-400 font-semibold mb-1.5">📍 {s.name}</p>
+                    
                     {s.temperature !== null && (
-                      <div className="flex gap-3 text-xs">
-                        <span style={{ color: '#f97316' }}>🌡️ {s.temperature.toFixed(1)}°C</span>
-                        <span style={{ color: '#38bdf8' }}>💧 {s.humidity?.toFixed(1)}%</span>
+                      <div className="flex gap-3 text-[11px] font-bold">
+                        <span className="text-orange-500">静态 🌡️ {s.temperature.toFixed(1)}°C</span>
+                        <span className="text-blue-500">💧 {s.humidity?.toFixed(1)}%</span>
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* BARRA DE HUMEDAD */}
+                {/* VISUALIZADOR DE RIEGO RÁPIDO */}
                 {s.humidity !== null && (
-                  <div className="mt-3">
-                    <div className="flex justify-between text-xs mb-1" style={{ color: '#4a6a4a' }}>
-                      <span>Humedad</span>
-                      <span style={{ color: '#a3d9a5' }}>{s.humidity?.toFixed(0)}%</span>
+                  <div className="mt-3 pt-2.5 border-t border-slate-100/60">
+                    <div className="flex justify-between text-[10px] text-slate-400 font-bold mb-1">
+                      <span>Nivel de hidratación</span>
+                      <span className="text-slate-600">{s.humidity?.toFixed(0)}%</span>
                     </div>
-                    <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#1a3a20' }}>
+                    <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all"
                         style={{
                           width: `${s.humidity}%`,
-                          backgroundColor: (s.humidity ?? 0) < 30 ? '#f87171' :
-                            (s.humidity ?? 0) > 80 ? '#60a5fa' : '#4ade80'
+                          backgroundColor: (s.humidity ?? 0) < 30 ? '#ef4444' :
+                            (s.humidity ?? 0) > 80 ? '#3b82f6' : '#10b981'
                         }}
                       />
                     </div>
@@ -441,113 +344,74 @@ export default function Reportes() {
       {activeTab === 'graficas' && (
         <div className="space-y-4">
           {barData.length === 0 ? (
-            <div
-              className="rounded-2xl p-10 text-center"
-              style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-            >
+            <div className="bg-white rounded-[2rem] border-2 border-dashed border-slate-200 p-10 text-center py-14">
               <p className="text-4xl mb-3">📊</p>
-              <p style={{ color: '#6b9e6e' }}>Sin datos para graficar</p>
-              <p className="text-xs mt-1" style={{ color: '#4a6a4a' }}>
-                Usa el simulador para generar lecturas
-              </p>
+              <p className="text-xs text-slate-400 font-bold">Sin datos para graficar</p>
             </div>
           ) : (
             <>
-              {/* GRÁFICA TEMPERATURA */}
-              <div
-                className="rounded-2xl p-4"
-                style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-              >
+              {/* COMPORTAMIENTO TEMPERATURA POR PLANTA */}
+              <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-3xs">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-semibold text-white text-sm">🌡️ Temperatura por planta</h2>
-                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#1a3a20', color: '#6b9e6e' }}>
+                  <h2 className="font-bold text-slate-700 text-xs">🌡️ Temperatura por planta</h2>
+                  <span className="text-[10px] bg-slate-50 border border-slate-200/60 px-2 py-0.5 rounded-md text-slate-500 font-bold">
                     °C
                   </span>
                 </div>
-                <ResponsiveContainer width="100%" height={180}>
-                  <BarChart data={barData} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1a3a20" />
-                    <XAxis dataKey="name" tick={{ fill: '#6b9e6e', fontSize: 14 }} />
-                    <YAxis tick={{ fill: '#6b9e6e', fontSize: 10 }} />
+                <ResponsiveContainer width="100%" height={170}>
+                  <BarChart data={barData} margin={{ top: 5, right: 5, bottom: 5, left: -25 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 13 }} />
+                    <YAxis tick={{ fill: '#94a3b8', fontSize: 9 }} />
                     <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#0d2318',
-                        border: '1px solid #1a3a20',
-                        borderRadius: '12px',
-                        color: 'white',
-                        fontSize: '12px'
-                      }}
-                      formatter={(value, _name, props) => [
-                        `${value}°C`,
-                        props.payload.fullName
-                      ]}
+                      contentStyle={{ borderRadius: '12px', fontSize: '11px' }}
+                      formatter={(value, _name, props) => [`${value}°C`, props.payload.fullName]}
                     />
-                    <Bar dataKey="Temp" fill="#f97316" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="Temp" fill="#f97316" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
 
-              {/* GRÁFICA HUMEDAD */}
-              <div
-                className="rounded-2xl p-4"
-                style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-              >
+              {/* COMPORTAMIENTO HUMEDAD POR PLANTA */}
+              <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-3xs">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-semibold text-white text-sm">💧 Humedad por planta</h2>
-                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#1a3a20', color: '#6b9e6e' }}>
+                  <h2 className="font-bold text-slate-700 text-xs">💧 Humedad por planta</h2>
+                  <span className="text-[10px] bg-slate-50 border border-slate-200/60 px-2 py-0.5 rounded-md text-slate-500 font-bold">
                     %
                   </span>
                 </div>
-                <ResponsiveContainer width="100%" height={180}>
-                  <AreaChart data={barData} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
+                <ResponsiveContainer width="100%" height={170}>
+                  <AreaChart data={barData} margin={{ top: 5, right: 5, bottom: 5, left: -25 }}>
                     <defs>
                       <linearGradient id="humGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.3} />
+                        <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.2} />
                         <stop offset="95%" stopColor="#38bdf8" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1a3a20" />
-                    <XAxis dataKey="name" tick={{ fill: '#6b9e6e', fontSize: 14 }} />
-                    <YAxis tick={{ fill: '#6b9e6e', fontSize: 10 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 13 }} />
+                    <YAxis tick={{ fill: '#94a3b8', fontSize: 9 }} />
                     <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#0d2318',
-                        border: '1px solid #1a3a20',
-                        borderRadius: '12px',
-                        color: 'white',
-                        fontSize: '12px'
-                      }}
-                      formatter={(value, _unused, props) => [
-                        `${value}°C`,
-                        props.payload.fullName
-                      ]}
+                      contentStyle={{ borderRadius: '12px', fontSize: '11px' }}
+                      formatter={(value, _unused, props) => [`${value}%`, props.payload.fullName]}
                     />
-                    <Area
-                      type="monotone"
-                      dataKey="Hum"
-                      stroke="#38bdf8"
-                      fill="url(#humGradient)"
-                      strokeWidth={2}
-                    />
+                    <Area type="monotone" dataKey="Hum" stroke="#38bdf8" fill="url(#humGradient)" strokeWidth={2.5} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
 
-              {/* LEYENDA */}
-              <div
-                className="rounded-2xl p-4"
-                style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-              >
-                <p className="text-xs font-semibold mb-3" style={{ color: '#6b9e6e' }}>
-                  📋 Referencias
+              {/* LEYENDA DETALLADA */}
+              <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-3xs">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">
+                  📋 Lista de referencias
                 </p>
-                <div className="space-y-2">
+                <div className="space-y-2.5 divide-y divide-slate-100/70">
                   {barData.map((d, i) => (
-                    <div key={i} className="flex items-center justify-between text-xs">
-                      <span className="text-white">{d.name} {d.fullName}</span>
-                      <div className="flex gap-3">
-                        <span style={{ color: '#f97316' }}>🌡️ {d.Temp}°C</span>
-                        <span style={{ color: '#38bdf8' }}>💧 {d.Hum}%</span>
+                    <div key={i} className={`flex items-center justify-between text-xs font-semibold ${i > 0 ? 'pt-2.5' : ''}`}>
+                      <span className="text-slate-700">{d.name} {d.fullName}</span>
+                      <div className="flex gap-3 text-[11px]">
+                        <span className="text-orange-500 font-bold">🌡️ {d.Temp}°C</span>
+                        <span className="text-blue-500 font-bold">💧 {d.Hum}%</span>
                       </div>
                     </div>
                   ))}

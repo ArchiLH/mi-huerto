@@ -70,139 +70,114 @@ export default function Configuracion() {
 
   if (loading) {
     return (
-      <div className="space-y-3">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-24 rounded-2xl animate-pulse" style={{ backgroundColor: '#0d2318' }} />
-        ))}
+      <div className="w-full bg-[#f4f7f5] min-h-screen px-5 pt-6 space-y-4">
+        <div className="h-6 w-1/3 bg-slate-200/60 rounded-lg animate-pulse" />
+        <div className="h-20 bg-white rounded-2xl animate-pulse border border-slate-100" />
+        <div className="h-32 bg-white rounded-2xl animate-pulse border border-slate-100" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-5">
+    <div className="w-full bg-[#f4f7f5] min-h-screen px-5 pt-6 space-y-5 max-w-md mx-auto pb-10 font-sans text-slate-700">
 
-      {/* HEADER */}
-      <div
-        className="rounded-2xl p-5"
-        style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-      >
-        <span className="text-xs font-mono uppercase tracking-widest" style={{ color: '#4a6a4a' }}>
+      {/* HEADER DE AJUSTES */}
+      <div className="space-y-1">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
           Ajustes
         </span>
-        <h1 className="text-xl font-bold text-white mt-1">⚙️ Configuración</h1>
-        <p className="text-sm mt-0.5" style={{ color: '#6b9e6e' }}>
+        <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+          Configuración ⚙️
+        </h1>
+        <p className="text-xs text-slate-400 font-medium">
           Gestiona tu cuenta y notificaciones
         </p>
       </div>
 
       {/* CUENTA */}
-      <div
-        className="rounded-2xl p-4 flex items-center gap-3"
-        style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-      >
-        <div
-          className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg shrink-0"
-          style={{ backgroundColor: '#1a3a20', color: '#a3d9a5' }}
-        >
+      <div className="bg-white rounded-2xl p-4 flex items-center gap-4 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+        <div className="w-12 h-12 rounded-full flex items-center justify-center font-extrabold text-lg shrink-0 bg-[#e2faee] text-[#009660]">
           {user?.email?.[0].toUpperCase()}
         </div>
-        <div>
-          <p className="font-bold text-white">{user?.email?.split('@')[0]}</p>
-          <p className="text-xs" style={{ color: '#6b9e6e' }}>{user?.email}</p>
+        <div className="min-w-0">
+          <p className="font-extrabold text-xs text-slate-800 truncate">
+            {user?.email?.split('@')[0]}
+          </p>
+          <p className="text-[10px] text-slate-400 font-semibold truncate">
+            {user?.email}
+          </p>
         </div>
       </div>
 
       {/* TELEGRAM */}
-      <div
-        className="rounded-2xl p-5 space-y-4"
-        style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-      >
+      <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] space-y-4">
         <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-            style={{ backgroundColor: '#1a3a20' }}
-          >
+          <div className="w-10 h-10 rounded-xl bg-sky-50 text-xl flex items-center justify-center shrink-0 border border-sky-100/50">
             ✈️
           </div>
           <div>
-            <h2 className="font-semibold text-white">Notificaciones Telegram</h2>
-            <p className="text-xs" style={{ color: '#6b9e6e' }}>Recibe alertas directo en tu celular</p>
+            <h2 className="font-extrabold text-xs text-slate-800">Notificaciones Telegram</h2>
+            <p className="text-[10px] text-slate-400 font-semibold">Recibe alertas directamente en tu celular</p>
           </div>
         </div>
 
         {connected ? (
           <div className="space-y-3">
-            <div
-              className="flex items-center gap-3 rounded-xl px-4 py-3"
-              style={{ backgroundColor: '#0a2a10', border: '1px solid #2d6a35' }}
-            >
-              <span className="text-2xl">✅</span>
+            <div className="flex items-center gap-3 rounded-xl px-4 py-3 bg-[#e2faee]/50 border border-emerald-100">
+              <span className="text-xl shrink-0">✅</span>
               <div>
-                <p className="font-medium" style={{ color: '#4ade80' }}>Telegram conectado</p>
-                <p className="text-xs" style={{ color: '#6b9e6e' }}>Recibirás alertas automáticamente</p>
+                <p className="text-xs font-bold text-[#008f51]">Telegram conectado</p>
+                <p className="text-[10px] text-slate-400 font-semibold">Recibirás alertas de forma automática</p>
               </div>
             </div>
             <button
               onClick={disconnect}
-              className="w-full py-2.5 rounded-xl text-sm transition"
-              style={{ backgroundColor: '#0a1a0f', color: '#6b9e6e', border: '1px solid #1a3a20' }}
+              className="w-full py-2.5 rounded-xl text-xs font-bold bg-slate-50 hover:bg-slate-100 text-slate-500 border border-slate-200/60 transition-colors"
             >
               Desconectar Telegram
             </button>
           </div>
         ) : code ? (
           <div className="space-y-3">
-            <div
-              className="rounded-xl p-4 text-center space-y-3"
-              style={{ backgroundColor: '#0a1a0f' }}
-            >
-              <p className="text-sm text-white">
-                Se abrió Telegram. Presiona <b>Start</b> y vuelve aquí.
+            <div className="rounded-xl p-4 text-center space-y-3 bg-[#f8faf9] border border-slate-100">
+              <p className="text-xs text-slate-500 font-bold leading-relaxed">
+                Se abrió Telegram. Presiona <b className="text-slate-700">Start</b> y vuelve aquí.
               </p>
-              <div
-                className="rounded-xl py-3"
-                style={{ backgroundColor: '#0d2318' }}
-              >
-                <p className="text-xs mb-1" style={{ color: '#4a6a4a' }}>Tu código</p>
-                <p className="text-3xl font-bold tracking-widest" style={{ color: '#4ade80' }}>{code}</p>
+              
+              <div className="rounded-xl py-2.5 bg-white border border-slate-200/50 shadow-3xs max-w-[200px] mx-auto">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-0.5">Tu código</p>
+                <p className="text-2xl font-black tracking-widest text-[#009660]">{code}</p>
               </div>
-              <p className="text-xs" style={{ color: '#4a6a4a' }}>
-                El bot lo recibe automáticamente
-              </p>
             </div>
+            
             <button
               onClick={checkConnection}
               disabled={checking}
-              className="w-full text-white font-semibold py-3 rounded-xl transition disabled:opacity-50"
-              style={{ backgroundColor: '#2d6a35' }}
+              className="w-full text-white font-bold py-3 rounded-xl text-xs bg-[#009660] hover:bg-[#008152] transition disabled:opacity-50 shadow-3xs"
             >
               {checking ? 'Verificando...' : '✅ Ya presioné Start — Verificar'}
             </button>
+            
             <button
               onClick={() => window.open(`https://t.me/${BOT_USERNAME}?start=${code}`, '_blank')}
-              className="w-full py-2.5 rounded-xl text-sm transition"
-              style={{ backgroundColor: '#0a1a0f', color: '#6b9e6e', border: '1px solid #1a3a20' }}
+              className="w-full py-2.5 rounded-xl text-xs font-bold bg-slate-50 text-slate-500 border border-slate-200/60 transition-colors"
             >
               📱 Volver a abrir Telegram
             </button>
           </div>
         ) : (
           <div className="space-y-3">
-            <div
-              className="rounded-xl p-4 text-center space-y-2"
-              style={{ backgroundColor: '#0a1a0f' }}
-            >
+            <div className="rounded-2xl p-5 text-center space-y-2.5 bg-[#fafbfc] border-2 border-dashed border-slate-200/80">
               <p className="text-3xl">📵</p>
-              <p className="text-sm text-white">Telegram no está conectado</p>
-              <p className="text-xs" style={{ color: '#6b9e6e' }}>
-                Conecta para recibir alertas cuando tus plantas necesiten cuidado
+              <h3 className="text-xs font-bold text-slate-700">Telegram no está conectado</h3>
+              <p className="text-[10px] text-slate-400 font-semibold leading-relaxed max-w-[240px] mx-auto">
+                Conéctalo para recibir alertas y cuidar de tus plantas a tiempo.
               </p>
             </div>
             <button
               onClick={startConnect}
               disabled={connecting}
-              className="w-full text-white font-semibold py-3 rounded-xl transition disabled:opacity-50"
-              style={{ backgroundColor: '#1a6aaa' }}
+              className="w-full text-white font-bold py-3 rounded-xl text-xs bg-[#229ED9] hover:bg-[#1a85b8] transition-colors disabled:opacity-50 shadow-3xs"
             >
               {connecting ? 'Generando código...' : '📱 Conectar Telegram'}
             </button>
@@ -210,41 +185,38 @@ export default function Configuracion() {
         )}
       </div>
 
-      {/* HERRAMIENTAS */}
-      <div
-        className="rounded-2xl p-4 space-y-2"
-        style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-      >
-        <p className="text-xs font-semibold mb-3 uppercase tracking-widest" style={{ color: '#4a6a4a' }}>
+      {/* HERRAMIENTAS ADICIONALES */}
+      <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] space-y-3">
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
           🛠️ Herramientas
         </p>
 
-        {[
-          { icon: '🧪', label: 'Simulador de lecturas', desc: 'Envía datos de prueba', path: '/simulador' },
-          { icon: '📈', label: 'Historial de lecturas', desc: 'Ve la evolución de tus plantas', path: '/historial' },
-          { icon: '📡', label: 'Gestionar sensores', desc: 'Agrega, edita o elimina sensores', path: '/sensores' },
-        ].map((item, i) => (
-          <button
-            key={i}
-            onClick={() => navigate(item.path)}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition text-left"
-            style={{ backgroundColor: '#0a1a0f' }}
-          >
-            <span className="text-2xl">{item.icon}</span>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-white">{item.label}</p>
-              <p className="text-xs" style={{ color: '#6b9e6e' }}>{item.desc}</p>
-            </div>
-            <span style={{ color: '#2d6a35' }}>›</span>
-          </button>
-        ))}
+        <div className="space-y-2">
+          {[
+            { icon: '🧪', label: 'Simulador de lecturas', desc: 'Envía datos de prueba', path: '/simulador' },
+            { icon: '📈', label: 'Historial de lecturas', desc: 'Ve la evolución de tus plantas', path: '/historial' },
+            { icon: '📡', label: 'Gestionar sensores', desc: 'Agrega, edita o elimina sensores', path: '/sensores' },
+          ].map((item, i) => (
+            <button
+              key={i}
+              onClick={() => navigate(item.path)}
+              className="w-full flex items-center gap-3 px-4 py-3 bg-[#f8faf9] hover:bg-[#f3f6f4] rounded-xl border border-slate-100/50 transition-all text-left"
+            >
+              <span className="text-2xl shrink-0">{item.icon}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-slate-800">{item.label}</p>
+                <p className="text-[10px] text-slate-400 font-semibold truncate">{item.desc}</p>
+              </div>
+              <span className="text-[#009660] font-black text-lg">›</span>
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* CERRAR SESIÓN */}
+      {/* BOTÓN CERRAR SESIÓN */}
       <button
         onClick={signOut}
-        className="w-full py-3 rounded-2xl text-sm font-medium transition"
-        style={{ backgroundColor: '#1a0808', color: '#f87171', border: '1px solid #5a1a1a' }}
+        className="w-full py-3 rounded-2xl text-xs font-bold bg-red-50 text-red-600 border border-red-200/60 hover:bg-red-100 transition shadow-3xs"
       >
         🚪 Cerrar sesión
       </button>
