@@ -97,9 +97,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <div className="w-7 h-7 bg-emerald-50 rounded-lg flex items-center justify-center border border-emerald-100">
-            <span className="text-sm">🪴</span>
-          </div>
+          <img
+            src="/logo.png"
+            alt="Secret Garden"
+            className="w-9 h-9 object-contain"
+          />
         </div>
         
         {/* BOTÓN CIRCULAR DE PERFIL */}
@@ -124,7 +126,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="space-y-6">
           <div className="flex items-center gap-3 pb-2">
             <div className="w-12 h-12 bg-white rounded-2xl p-1.5 flex items-center justify-center shadow-md">
-              <span className="text-2xl">🪴</span>
+              <img
+                src="/logo.png"
+                alt="Secret Garden"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <h2 className="font-black text-base tracking-tight leading-tight">Secret Garden</h2>

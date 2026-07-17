@@ -77,191 +77,75 @@ export default function Simulador() {
       await supabase.from('alerts').insert(alerts)
       if (telegramEnabled && userChatId) {
         for (const alert of alerts) {
-          const mensaje = `🌿 <b>Mi Huerto — Alerta</b>\n\n${alertTypeLabel[alert.type]}\n\n📍 Sensor: <b>${selectedSensor.name}</b>\n📦 Espacio: <b>${selectedSensor.spaces?.name ?? 'Sin espacio'}</b>\n🌡️ Temperatura: <b>${temp}°C</b>\n💧 Humedad: <b>${hum}%</b>\n\n💡 <i>${alert.care_message}</i>\n\n⏰ ${new Date().toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`.trim()
+          const mensaje = `🌿 <b>Mi Huerto — Alerta</b>\n\n${alertTypeLabel[alert.type]}\n\n📍 Sensor: <b>${selectedSensor.name}</b>\n📦 Espacio: <b>${selectedSensor.spaces?.name ?? 'Sin espacio'}</b>\n🌡️ Temperatura: <b>${temp}°C</b>\n💧 Humedad: <b>${hum}%</b>\n\n💡 <i>${alert.care_message}</i>`.trim()
           await sendTelegramAlert(mensaje, userChatId)
         }
-        setLastResult(`✅ Lectura guardada + ⚠️ ${alerts.length} alerta(s) + 📨 Telegram enviado`)
+        setLastResult(`✅ Enviado + ⚠️ ${alerts.length} alerta(s) + 📨 Telegram`)
       } else {
-        setLastResult(`✅ Lectura guardada + ⚠️ ${alerts.length} alerta(s) generada(s)`)
+        setLastResult(`✅ Enviado + ⚠️ ${alerts.length} alerta(s) generada(s)`)
       }
     } else {
-      setLastResult('✅ Lectura guardada — todo dentro de los rangos normales')
+      setLastResult('✅ Lectura guardada — todo normal')
     }
-
     setLoading(false)
   }
 
-  const sendRandom = () => {
-    setTemperature((Math.random() * 50).toFixed(1))
-    setHumidity((Math.random() * 100).toFixed(1))
-  }
-
-  const sendCritical = () => {
-    if (!selectedSensor) return
-    setTemperature(String(selectedSensor.max_temp + 10))
-    setHumidity(String(selectedSensor.min_humidity - 10))
-  }
-
   return (
-    <div className="space-y-5">
-
+    <div className="w-full max-w-md mx-auto px-5 pt-6 pb-10 space-y-5">
       {/* HEADER */}
-      <div
-        className="rounded-2xl p-5"
-        style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-      >
-        <span className="text-xs font-mono uppercase tracking-widest" style={{ color: '#4a6a4a' }}>
-          Herramienta de prueba
-        </span>
-        <h1 className="text-xl font-bold text-white mt-1">🧪 Simulador</h1>
-        <p className="text-sm mt-0.5" style={{ color: '#6b9e6e' }}>
-          Envía lecturas de prueba a tus sensores
-        </p>
+      <div className="space-y-1">
+        <h1 className="text-2xl font-black text-[#1e293b] tracking-tight">🧪 Simulador</h1>
+        <p className="text-xs text-slate-400 font-semibold">Envía lecturas de prueba a tus sensores</p>
       </div>
 
       {/* ESTADO TELEGRAM */}
-      <div
-        className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm"
-        style={{
-          backgroundColor: telegramEnabled && userChatId ? '#0a2a10' : '#0d2318',
-          border: `1px solid ${telegramEnabled && userChatId ? '#2d6a35' : '#1a3a20'}`,
-          color: telegramEnabled && userChatId ? '#4ade80' : '#6b9e6e'
-        }}
-      >
+      <div className={`flex items-center gap-2 rounded-2xl px-5 py-4 text-xs font-bold border ${telegramEnabled && userChatId ? 'bg-[#e2faee] text-[#009660] border-emerald-100' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
         <span>{telegramEnabled && userChatId ? '✅' : '⚠️'}</span>
-        <span>
-          {telegramEnabled && userChatId
-            ? 'Telegram conectado — recibirás alertas'
-            : 'Telegram no configurado — ve a ⚙️ Config'}
-        </span>
+        <span>{telegramEnabled && userChatId ? 'Telegram conectado' : 'Telegram no configurado'}</span>
       </div>
 
       {sensors.length === 0 ? (
-        <div
-          className="rounded-2xl p-10 text-center"
-          style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-        >
+        <div className="bg-white rounded-[2rem] border border-slate-100 p-10 text-center shadow-3xs">
           <p className="text-4xl mb-3">📡</p>
-          <p style={{ color: '#6b9e6e' }}>Primero agrega un sensor en Sensores</p>
+          <p className="text-xs font-bold text-slate-400">Primero agrega un sensor en Sensores</p>
         </div>
       ) : (
         <>
           {/* SELECTOR */}
-          <div
-            className="rounded-2xl p-4 space-y-2"
-            style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-          >
-            <p className="text-xs font-semibold mb-2 uppercase tracking-widest" style={{ color: '#4a6a4a' }}>
-              📡 Sensor
-            </p>
+          <div className="bg-white rounded-[2rem] border border-slate-100 p-5 shadow-3xs space-y-3">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">📡 Seleccionar Sensor</p>
             {sensors.map(s => (
               <button
                 key={s.id}
                 onClick={() => setSelectedSensor(s)}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition"
-                style={{
-                  backgroundColor: selectedSensor?.id === s.id ? '#2d6a35' : '#0a1a0f',
-                  border: `1px solid ${selectedSensor?.id === s.id ? '#2d6a35' : '#1a3a20'}`,
-                  color: selectedSensor?.id === s.id ? 'white' : '#a3d9a5'
-                }}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all ${selectedSensor?.id === s.id ? 'bg-[#10b981] text-white' : 'bg-[#f8fafc] text-slate-600 hover:bg-slate-100'}`}
               >
                 <span>{s.name}</span>
-                <span className="text-xs opacity-70">{s.spaces?.name}</span>
+                <span className="opacity-70">{s.spaces?.name}</span>
               </button>
             ))}
           </div>
 
-          {/* RANGOS */}
-          {selectedSensor && (
-            <div
-              className="rounded-2xl p-4"
-              style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-            >
-              <p className="text-xs font-semibold mb-3 uppercase tracking-widest" style={{ color: '#4a6a4a' }}>
-                📋 Rangos de {selectedSensor.name}
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl p-3 text-center" style={{ backgroundColor: '#0a1a0f' }}>
-                  <p style={{ color: '#f97316' }} className="font-bold">
-                    {selectedSensor.min_temp}° – {selectedSensor.max_temp}°C
-                  </p>
-                  <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>Temperatura</p>
-                </div>
-                <div className="rounded-xl p-3 text-center" style={{ backgroundColor: '#0a1a0f' }}>
-                  <p style={{ color: '#38bdf8' }} className="font-bold">
-                    {selectedSensor.min_humidity}% – {selectedSensor.max_humidity}%
-                  </p>
-                  <p className="text-xs mt-0.5" style={{ color: '#4a6a4a' }}>Humedad</p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* INPUTS */}
-          <div
-            className="rounded-2xl p-4 space-y-4"
-            style={{ backgroundColor: '#0d2318', border: '1px solid #1a3a20' }}
-          >
-            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#4a6a4a' }}>
-              📤 Enviar lectura
-            </p>
-
-            <div>
-              <label className="text-xs mb-1.5 block" style={{ color: '#6b9e6e' }}>
-                🌡️ Temperatura (°C)
-              </label>
-              <input
-                type="number"
-                value={temperature}
-                onChange={e => setTemperature(e.target.value)}
-                className="w-full text-white rounded-xl px-4 py-3 outline-none"
-                style={{ backgroundColor: '#0a1a0f', border: '1px solid #1a3a20' }}
-                onFocus={e => e.target.style.borderColor = '#4ade80'}
-                onBlur={e => e.target.style.borderColor = '#1a3a20'}
-              />
-            </div>
-
-            <div>
-              <label className="text-xs mb-1.5 block" style={{ color: '#6b9e6e' }}>
-                💧 Humedad (%)
-              </label>
-              <input
-                type="number"
-                value={humidity}
-                onChange={e => setHumidity(e.target.value)}
-                className="w-full text-white rounded-xl px-4 py-3 outline-none"
-                style={{ backgroundColor: '#0a1a0f', border: '1px solid #1a3a20' }}
-                onFocus={e => e.target.style.borderColor = '#4ade80'}
-                onBlur={e => e.target.style.borderColor = '#1a3a20'}
-              />
+          <div className="bg-white rounded-[2rem] border border-slate-100 p-6 shadow-3xs space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] font-black text-slate-400 mb-1.5 block uppercase">Temp (°C)</label>
+                <input type="number" value={temperature} onChange={e => setTemperature(e.target.value)} className="w-full rounded-xl px-4 py-3 bg-[#f8fafc] border border-slate-100 text-xs font-bold text-slate-700 focus:border-[#4ade80] outline-none" />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-400 mb-1.5 block uppercase">Hum (%)</label>
+                <input type="number" value={humidity} onChange={e => setHumidity(e.target.value)} className="w-full rounded-xl px-4 py-3 bg-[#f8fafc] border border-slate-100 text-xs font-bold text-slate-700 focus:border-[#4ade80] outline-none" />
+              </div>
             </div>
 
             <div className="flex gap-2">
-              <button
-                onClick={sendRandom}
-                className="flex-1 py-2 rounded-xl text-xs transition"
-                style={{ backgroundColor: '#1a3a20', color: '#4ade80' }}
-              >
-                🎲 Aleatorios
-              </button>
-              <button
-                onClick={sendCritical}
-                className="flex-1 py-2 rounded-xl text-xs transition"
-                style={{ backgroundColor: '#1a0808', color: '#f87171' }}
-              >
-                ⚠️ Críticos
-              </button>
+              <button onClick={() => { setTemperature((Math.random() * 50).toFixed(1)); setHumidity((Math.random() * 100).toFixed(1)) }} className="flex-1 py-3 rounded-xl text-[10px] font-black bg-slate-100 text-slate-600 hover:bg-slate-200 transition">🎲 Aleatorios</button>
+              <button onClick={() => selectedSensor && (setTemperature(String(selectedSensor.max_temp + 5)), setHumidity(String(selectedSensor.min_humidity - 5)))} className="flex-1 py-3 rounded-xl text-[10px] font-black bg-red-50 text-red-600 hover:bg-red-100 transition">⚠️ Críticos</button>
             </div>
 
             {lastResult && (
-              <div
-                className="rounded-xl px-4 py-3 text-sm"
-                style={{
-                  backgroundColor: lastResult.includes('alerta') ? '#1a1208' : '#0a2a10',
-                  border: `1px solid ${lastResult.includes('alerta') ? '#5a3a10' : '#2d6a35'}`,
-                  color: lastResult.includes('alerta') ? '#fbbf24' : '#4ade80'
-                }}
-              >
+              <div className={`rounded-xl px-4 py-3 text-[10px] font-bold ${lastResult.includes('alerta') ? 'bg-amber-50 text-amber-700 border border-amber-100' : 'bg-[#e2faee] text-[#009660] border border-emerald-100'}`}>
                 {lastResult}
               </div>
             )}
@@ -269,8 +153,7 @@ export default function Simulador() {
             <button
               onClick={sendReading}
               disabled={loading}
-              className="w-full text-white font-semibold rounded-xl py-3 transition disabled:opacity-50"
-              style={{ backgroundColor: '#2d6a35' }}
+              className="w-full text-white font-black rounded-xl py-3 text-xs bg-[#10b981] hover:bg-[#059669] transition shadow-3xs disabled:opacity-50"
             >
               {loading ? 'Enviando...' : '📤 Enviar lectura'}
             </button>

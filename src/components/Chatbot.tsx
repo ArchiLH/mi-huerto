@@ -101,7 +101,7 @@ export default function Chatbot({ onClose }: { onClose: () => void }) {
         <div className="flex items-center gap-2">
           {/* Logo circular */}
           <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center p-0.5 shadow-xs">
-            <span className="text-lg">🪴</span>
+            <img src="/logo.png" alt="Secret Garden" className="w-full h-full object-contain" />
           </div>
           <div>
             <h3 className="font-bold text-sm tracking-tight">Asistente Secret Garden</h3>
@@ -170,14 +170,28 @@ export default function Chatbot({ onClose }: { onClose: () => void }) {
         
         {/* Botón circular verde menta claro con avioncito */}
         <button
-          disabled={loading}
-          onClick={() => sendMessage()}
-          className="w-9 h-9 bg-[#8adcb3] text-white rounded-full flex items-center justify-center shadow-2xs active:scale-90 disabled:opacity-50 transition-all shrink-0"
-        >
-          <svg className="w-4 h-4 text-white transform rotate-45 -translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-          </svg>
-        </button>
+  disabled={loading}
+  onClick={() => sendMessage()}
+  className={`w-9 h-9 text-white rounded-full flex items-center justify-center shadow-md active:scale-90 disabled:opacity-50 transition-all shrink-0 ${
+    input.trim()
+      ? "bg-[#3FA66B]"
+      : "bg-[#8adcb3]"
+  }`}
+>
+  <svg 
+    className="w-4 h-4 text-white -rotate-45 translate-x-0.5"
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2.5" 
+    viewBox="0 0 24 24"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" 
+    />
+  </svg>
+</button>
       </div>
 
     </div>

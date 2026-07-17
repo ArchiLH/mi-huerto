@@ -215,7 +215,7 @@ export default function Reportes() {
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-3xs flex flex-col justify-between">
               <div className="w-9 h-9 rounded-xl bg-orange-50 text-xl flex items-center justify-center mb-3">
-                淡淡 🌡️
+                🌡️
               </div>
               <div>
                 <p className="text-2xl font-black text-slate-800 prefix-degree leading-none">
@@ -308,7 +308,7 @@ export default function Reportes() {
                     
                     {s.temperature !== null && (
                       <div className="flex gap-3 text-[11px] font-bold">
-                        <span className="text-orange-500">静态 🌡️ {s.temperature.toFixed(1)}°C</span>
+                        <span className="text-orange-500">🌡️ {s.temperature.toFixed(1)}°C</span>
                         <span className="text-blue-500">💧 {s.humidity?.toFixed(1)}%</span>
                       </div>
                     )}
