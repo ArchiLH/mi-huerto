@@ -48,7 +48,7 @@ export default function Plantas() {
 
   return (
     <div className="w-full min-h-screen bg-[#f4f7f5] p-3 sm:p-6 lg:p-8 flex justify-center">
-      <div className="w-full max-w-[1200px] space-y-6 pb-16">
+      <div className="w-full max-w-[1200px] space-y-6 pb-16 font-sans text-slate-800">
 
         {/* HEADER DE LA PÁGINA */}
         <div className="space-y-1 bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-xs">
@@ -70,7 +70,7 @@ export default function Plantas() {
               placeholder="Buscar planta..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full bg-[#f4f7f5] text-slate-800 placeholder-slate-400 rounded-xl pl-10 pr-4 py-2.5 outline-none border border-slate-200/60 text-xs font-semibold focus:border-emerald-500 transition-colors"
+              className="w-full bg-[#f4f7f5] text-slate-800 placeholder-slate-400 rounded-xl pl-10 pr-4 py-2.5 outline-none border border-slate-200/60 text-xs font-semibold focus:border-emerald-500 transition-colors shadow-3xs"
             />
           </div>
 
@@ -95,7 +95,7 @@ export default function Plantas() {
         {/* LISTADO DE PLANTAS AGRUPADAS */}
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[...Array(2)].main && [...Array(2)].map((_, i) => (
+            {[...Array(2)].map((_, i) => (
               <div key={i} className="h-80 bg-white rounded-[2rem] animate-pulse border border-slate-100 shadow-xs" />
             ))}
           </div>
