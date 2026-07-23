@@ -5,7 +5,8 @@ import Chatbot from './Chatbot'
 import { useState, useEffect } from 'react'
 import { App as CapacitorApp } from '@capacitor/app'
 import { supabase } from '../lib/supabase'
-import { handlePurchase } from '../lib/stripe'
+import { Browser } from '@capacitor/browser'
+import { Capacitor } from '@capacitor/core'
 
 const navItems = [
   { to: '/', icon: '🏠', label: 'Mi Huerto' },
@@ -29,42 +30,45 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [isPremium, setIsPremium] = useState(false)
   const [isRedirecting, setIsRedirecting] = useState(false)
 
-  const refreshPremiumStatus = async () => {
+  const refreshUserData = async () => {
     if (!user) return
-    const { data } = await supabase
+
+    const { data: settingsData } = await supabase
       .from('user_settings')
       .select('is_premium')
       .eq('id', user.id)
       .single()
 
-    if (data) {
-      setIsPremium(data.is_premium)
+    if (settingsData) {
+      setIsPremium(settingsData.is_premium)
+    }
+
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .single()
+
+    if (!profileError && profileData?.full_name) {
+      setProfileName(profileData.full_name)
+    } else {
+      setProfileName(user.email?.split('@')[0] ?? 'Usuario')
     }
   }
 
   useEffect(() => {
     if (!user) return
 
-    const loadUserData = async () => {
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', user.id)
-        .single()
+    refreshUserData()
 
-      if (!profileError && profileData?.full_name) {
-        setProfileName(profileData.full_name)
-      } else {
-        setProfileName(user.email?.split('@')[0] ?? 'Usuario')
-      }
-      refreshPremiumStatus()
-    }
-
-    loadUserData()
-
-    const channel = supabase
+    const settingsChannel = supabase
       .channel(`user-settings-changes-${user.id}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'user_settings', filter: `id=eq.${user.id}` },
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'user_settings', 
+        filter: `id=eq.${user.id}` 
+      },
       (payload) => {
         const nuevoEstado = (payload.new as { is_premium?: boolean })?.is_premium
         if (typeof nuevoEstado === 'boolean') {
@@ -73,21 +77,51 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       })
       .subscribe()
 
-    const setupAppListener = async () => {
-      const listener = await CapacitorApp.addListener('appStateChange', ({ isActive }) => {
-        if (isActive) {
-          refreshPremiumStatus()
+    const profileChannel = supabase
+      .channel(`profiles-changes-${user.id}`)
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'profiles', 
+        filter: `id=eq.${user.id}` 
+      },
+      (payload) => {
+        const nuevoNombre = (payload.new as { full_name?: string })?.full_name
+        if (nuevoNombre) {
+          setProfileName(nuevoNombre)
         }
       })
-      return listener
-    }
+      .subscribe()
+
+    let urlListener: any;
+    CapacitorApp.addListener('appUrlOpen', async (event) => {
+      if (event.url && (event.url.includes('success') || event.url.includes('user_id'))) {
+        try {
+          await Browser.close()
+        } catch (e) {
+          // El navegador ya podría estar cerrado
+        }
+        await refreshUserData()
+        navigate('/', { replace: true })
+      }
+    }).then(listener => {
+      urlListener = listener
+    })
 
     let appListener: any;
-    setupAppListener().then(l => appListener = l)
+    CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+      if (isActive) {
+        refreshUserData()
+      }
+    }).then(listener => {
+      appListener = listener
+    })
 
     return () => {
-      supabase.removeChannel(channel)
+      supabase.removeChannel(settingsChannel)
+      supabase.removeChannel(profileChannel)
       if (appListener) appListener.remove()
+      if (urlListener) urlListener.remove()
     }
   }, [user])
 
@@ -100,9 +134,43 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     if (!user || !user.email) return
     try {
       setIsRedirecting(true)
-      await handlePurchase(user.id, user.email)
-    } catch (err) {
-      console.error('Error al iniciar compra con Stripe:', err)
+
+      const platform = Capacitor.isNativePlatform() ? 'android' : 'web'
+
+      const response = await fetch(
+        'https://fdayefjmebnsrxbkuetq.supabase.co/functions/v1/create-checkout',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({
+            user_id: user.id,
+            email: user.email,
+            platform: platform
+          })
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok || !data?.url) {
+        throw new Error(data?.error || 'No se pudo crear la sesión de pago en Supabase')
+      }
+
+      const stripeUrl = data.url
+
+      // Forzar apertura externa compatible con Nox y Android nativo
+      if (Capacitor.isNativePlatform()) {
+        window.open(stripeUrl, '_system')
+      } else {
+        window.location.href = stripeUrl
+      }
+
+    } catch (err: any) {
+      console.error('DETALLE DEL ERROR STRIPE:', err)
+      alert('Error real: ' + (err.message || JSON.stringify(err)))
     } finally {
       setIsRedirecting(false)
     }
@@ -172,11 +240,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           <div className="shrink-0 p-5 pt-4 space-y-3 border-t border-emerald-800/60">
             {isPremium ? (
-              <div className="bg-[#244b36] text-amber-400 text-xs font-extrabold px-3 py-2 rounded-xl flex items-center justify-between">
+              <div className="bg-[#244b36] text-amber-400 text-xs font-extrabold px-3 py-2 rounded-xl flex items-center justify-between shadow-xs">
                 <span>👑 Plan Premium</span><span className="text-[10px] bg-amber-400 text-emerald-900 px-1.5 rounded font-black">ACTIVO</span>
               </div>
             ) : (
-              <button onClick={handleStripeCheckout} disabled={isRedirecting} className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-extrabold px-3 py-2.5 rounded-xl cursor-pointer">
+              <button onClick={handleStripeCheckout} disabled={isRedirecting} className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-extrabold px-3 py-2.5 rounded-xl cursor-pointer shadow-md hover:brightness-105 active:scale-95 transition-all">
                 {isRedirecting ? '⚡ Cargando...' : '⚡ Obtener Premium'}
               </button>
             )}
