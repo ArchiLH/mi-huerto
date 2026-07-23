@@ -31,7 +31,7 @@ type Profile = {
 
 export default function Perfil() {
   const { user } = useAuth()
-  const { isPremium } = usePremium() // ← Usamos el contexto
+  const { isPremium } = usePremium()
   const navigate = useNavigate()
 
   const [profile, setProfile] = useState<Profile>({
@@ -55,7 +55,6 @@ export default function Perfil() {
   const loadAll = async () => {
     if (!user) return
 
-    // 1. Validar perfil
     const { data: profileData } = await supabase
       .from('profiles')
       .select('*')
@@ -71,9 +70,6 @@ export default function Perfil() {
       })
     }
 
-    // 2. Ya no cargamos isPremium aquí, viene del contexto
-
-    // 3. Cantidad de plantas activas
     const { count } = await supabase
       .from('spaces')
       .select('*', { count: 'exact', head: true })
@@ -82,7 +78,6 @@ export default function Perfil() {
 
     setTotalPlants(count ?? 0)
 
-    // 4. Fecha de registro
     setMemberSince(
       new Date(user.created_at)
         .toLocaleDateString(
@@ -135,12 +130,11 @@ export default function Perfil() {
 
   const getInitials = () => {
     if (profile.full_name) {
-      return profile.full_name
-        .split(' ')
-        .map(n => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2)
+      const parts = profile.full_name.trim().split(/\s+/)
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase()
+      }
+      return parts[0][0].toUpperCase()
     }
     return user?.email?.[0]?.toUpperCase() ?? '?'
   }
@@ -162,202 +156,210 @@ export default function Perfil() {
 
   if (loading) {
     return (
-      <div className="w-full bg-[#f4f7f5]/40 min-h-screen px-5 pt-6 space-y-4">
-        <div className="h-6 w-1/3 bg-slate-100 rounded-lg animate-pulse" />
-        <div className="h-44 bg-white rounded-[2rem] animate-pulse border border-slate-100" />
+      <div className="w-full min-h-[60vh] flex flex-col justify-center items-center space-y-4 bg-[#f4f7f5]">
+        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs font-bold text-slate-400">Cargando perfil...</p>
       </div>
     )
   }
 
   return (
-    <div className="w-full bg-[#f4f7f5]/40 min-h-screen px-5 pt-6 space-y-5 max-w-md mx-auto pb-10 font-sans text-slate-800">
+    <div className="w-full min-h-screen bg-[#f4f7f5] p-3 sm:p-6 lg:p-8 flex justify-center">
+      <div className="w-full max-w-[1200px] space-y-6 pb-16 font-sans text-slate-800">
 
-      {/* Cabecera Mi Perfil */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-black text-[#1e293b] flex items-center gap-1.5 tracking-tight">
-          👤 Mi Perfil
-        </h1>
-        <p className="text-xs text-slate-400 font-semibold">
-          Gestiona los detalles de tu cuenta de Secret Garden
-        </p>
-      </div>
+        {/* HEADER DE LA PÁGINA */}
+        <div className="space-y-1 bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-xs">
+          <h1 className="text-xl sm:text-2xl font-black text-[#1e293b] tracking-tight">
+            Mi Perfil 👤
+          </h1>
+          <p className="text-xs text-slate-400 font-semibold leading-relaxed">
+            Gestiona los detalles de tu cuenta de Secret Garden
+          </p>
+        </div>
 
-      {/* Tarjeta de Información de Usuario */}
-      <div className="bg-white rounded-[2rem] border border-slate-100/85 p-5 flex flex-col gap-4 shadow-3xs">
-        <div className="flex gap-4 items-center">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center text-lg font-black shrink-0 border-[2px] border-[#4ade80]"
-            style={{
-              backgroundColor: '#e2faee',
-              color: '#0d2318'
-            }}
-          >
-            {getInitials()}
-          </div>
+        {/* DISTRIBUCIÓN EN 2 COLUMNAS PARA PC (O 1 COLUMNA EN MÓVIL) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          {/* COLUMNA IZQUIERDA: RESUMEN DE USUARIO Y STATS (Ocupa 5 columnas en PC) */}
+          <div className="lg:col-span-5 space-y-4">
+            <div className="bg-white rounded-[2rem] border border-[#51e29d]/60 p-5 sm:p-6 flex flex-col gap-5 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)]">
+              <div className="flex gap-4 items-center">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center text-xl sm:text-2xl font-black shrink-0 border border-emerald-200 bg-[#e2faee] text-[#009660] shadow-xs">
+                  {getInitials()}
+                </div>
 
-          <div className="min-w-0 flex-1">
-            <h2 className="font-extrabold text-slate-800 text-sm truncate leading-tight">
-              {profile.full_name || 'Usuario'}
-            </h2>
-            <p className="text-[11px] text-slate-400 font-bold truncate">
-              {user?.email}
-            </p>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-extrabold text-slate-800 text-sm sm:text-base truncate leading-tight">
+                    {profile.full_name || 'Usuario'}
+                  </h2>
+                  <p className="text-[11px] text-slate-400 font-bold truncate">
+                    {user?.email}
+                  </p>
 
-            {profile.country && (
-              <p className="text-[11px] mt-1 text-[#009660] font-black flex items-center gap-1">
-                <span>{profile.flag}</span> {profile.country}
-              </p>
-            )}
+                  {profile.country && (
+                    <p className="text-[11px] mt-1 text-[#009660] font-black flex items-center gap-1">
+                      <span>{profile.flag}</span> {profile.country}
+                    </p>
+                  )}
 
-            <div className="mt-2.5 flex items-center gap-2">
-              {isPremium ? (
-                <span className="text-[9px] font-black px-2.5 py-1 rounded-full uppercase leading-none shadow-3xs bg-amber-100/60 text-amber-600 border border-amber-200/40">
-                  👑 Premium
-                </span>
-              ) : (
-                <button
-                  onClick={handleStripeCheckout}
-                  disabled={isRedirecting}
-                  className="text-[9px] font-black px-2.5 py-1 rounded-full uppercase leading-none shadow-3xs bg-emerald-100 text-[#009660] border border-[#4ade80]/40 hover:bg-[#4ade80]/20 active:scale-95 transition-all cursor-pointer flex items-center gap-1 disabled:opacity-60"
-                >
-                  {isRedirecting ? '⚡ Cargando...' : '⚡ Obtener Premium'}
-                </button>
-              )}
-              
-              {getAge() && (
-                <span className="text-[10px] text-slate-400 font-bold">
-                  · {getAge()} años
-                </span>
-              )}
+                  <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+                    {isPremium ? (
+                      <span className="text-[9px] font-black px-2.5 py-1 rounded-full uppercase leading-none shadow-xs bg-amber-100/60 text-amber-600 border border-amber-200">
+                        👑 Premium
+                      </span>
+                    ) : (
+                      <button
+                        onClick={handleStripeCheckout}
+                        disabled={isRedirecting}
+                        className="text-[9px] font-black px-2.5 py-1 rounded-full uppercase leading-none shadow-xs bg-emerald-100 text-[#009660] border border-emerald-200 hover:bg-emerald-200 transition-all cursor-pointer flex items-center gap-1 disabled:opacity-60"
+                      >
+                        {isRedirecting ? '⚡ Cargando...' : '⚡ Obtener Premium'}
+                      </button>
+                    )}
+                    
+                    {getAge() && (
+                      <span className="text-[10px] text-slate-400 font-bold">
+                        · {getAge()} años
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* STATS */}
+              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+                <div className="rounded-2xl p-3.5 text-center bg-[#f8faf9] border border-slate-100 shadow-xs">
+                  <p className="text-xl text-[#009660] font-black">
+                    {totalPlants}
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-bold mt-0.5">
+                    Plantas activas
+                  </p>
+                </div>
+
+                <div className="rounded-2xl p-3.5 text-center bg-[#f8faf9] border border-slate-100 shadow-xs flex flex-col justify-center">
+                  <p className="text-[10px] text-slate-700 font-extrabold leading-tight">
+                    {memberSince}
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-bold mt-1">
+                    Miembro desde
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-3 mt-1">
-          <div className="rounded-2xl p-3 text-center bg-[#f8faf9] border border-slate-100/60 shadow-3xs">
-            <p className="text-xl text-[#009660] font-black">
-              {totalPlants}
-            </p>
-            <p className="text-[10px] text-slate-400 font-bold mt-0.5">
-              Plantas activas
-            </p>
-          </div>
-
-          <div className="rounded-2xl p-3 text-center bg-[#f8faf9] border border-slate-100/60 shadow-3xs flex flex-col justify-center">
-            <p className="text-[10px] text-slate-700 font-extrabold leading-tight">
-              {memberSince}
-            </p>
-            <p className="text-[10px] text-slate-400 font-bold mt-1">
-              Miembro desde
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Formulario EDITAR INFORMACIÓN */}
-      <div className="bg-white rounded-[2rem] border border-slate-100/85 p-6 space-y-4 shadow-3xs">
-        <h3 className="text-xs text-[#009660] font-black tracking-wider uppercase">
-          ✏️ Editar Información
-        </h3>
-
-        {/* Campo: Nombre completo */}
-        <div className="space-y-1.5">
-          <label className="block text-[11px] text-slate-400 font-bold">
-            Nombre completo
-          </label>
-          <input
-            value={profile.full_name}
-            onChange={e =>
-              setProfile({
-                ...profile,
-                full_name: e.target.value
-              })
-            }
-            placeholder="Nombre completo"
-            className="w-full rounded-xl p-3 text-slate-700 bg-[#f8fafc] border border-slate-100 focus:border-[#4ade80] focus:bg-white outline-none text-xs font-bold transition-all"
-          />
-        </div>
-
-        {/* Campo: Fecha de nacimiento */}
-        <div className="space-y-1.5">
-          <label className="block text-[11px] text-slate-400 font-bold">
-            Fecha de nacimiento
-          </label>
-          <input
-            type="date"
-            value={profile.birth_date}
-            onChange={e =>
-              setProfile({
-                ...profile,
-                birth_date: e.target.value
-              })
-            }
-            className="w-full rounded-xl p-3 text-slate-700 bg-[#f8fafc] border border-slate-100 focus:border-[#4ade80] focus:bg-white outline-none text-xs font-bold transition-all"
-          />
-        </div>
-
-        {/* Campo: País */}
-        <div className="space-y-1.5">
-          <label className="block text-[11px] text-slate-400 font-bold">
-            País
-          </label>
-          <div className="relative">
-            <select
-              value={profile.country}
-              onChange={e => {
-                const c = COUNTRIES.find(x => x.name === e.target.value)
-                setProfile({
-                  ...profile,
-                  country: c?.name ?? '',
-                  flag: c?.flag ?? ''
-                })
-              }}
-              className="w-full rounded-xl p-3 text-slate-700 bg-[#f8fafc] border border-slate-100 focus:border-[#4ade80] focus:bg-white outline-none text-xs font-bold transition-all appearance-none cursor-pointer"
+            {/* BOTÓN CONFIGURACIÓN */}
+            <button
+              onClick={() => navigate('/configuracion')}
+              className="w-full p-4 rounded-2xl bg-white border border-[#51e29d]/60 hover:bg-slate-50 flex justify-between items-center transition-colors shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] cursor-pointer text-xs font-black text-slate-700"
             >
-              <option value="">
-                Selecciona tu país 🌎
-              </option>
-              {COUNTRIES.map(c => (
-                <option
-                  key={c.name}
-                  value={c.name}
+              <span className="flex items-center gap-2">⚙️ Configuración y Sensores</span>
+              <span className="text-slate-400">❯</span>
+            </button>
+          </div>
+
+          {/* COLUMNA DERECHA: FORMULARIO DE EDICIÓN (Ocupa 7 columnas en PC) */}
+          <div className="lg:col-span-7">
+            <div className="bg-white rounded-[2rem] border border-[#51e29d]/60 p-6 sm:p-8 space-y-4 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)]">
+              <h3 className="text-xs text-[#009660] font-black tracking-wider uppercase pl-1">
+                ✏️ Editar Información
+              </h3>
+
+              {/* Campo: Nombre completo */}
+              <div className="space-y-1.5">
+                <label className="block text-[11px] text-slate-400 font-bold">
+                  Nombre completo
+                </label>
+                <input
+                  value={profile.full_name}
+                  onChange={e =>
+                    setProfile({
+                      ...profile,
+                      full_name: e.target.value
+                    })
+                  }
+                  placeholder="Nombre completo"
+                  className="w-full rounded-xl p-3.5 text-slate-700 bg-[#f8fafc] border border-slate-200/60 focus:border-emerald-500 focus:bg-white outline-none text-xs font-bold transition-all shadow-xs"
+                />
+              </div>
+
+              {/* Campo: Fecha de nacimiento */}
+              <div className="space-y-1.5">
+                <label className="block text-[11px] text-slate-400 font-bold">
+                  Fecha de nacimiento
+                </label>
+                <input
+                  type="date"
+                  value={profile.birth_date}
+                  onChange={e =>
+                    setProfile({
+                      ...profile,
+                      birth_date: e.target.value
+                    })
+                  }
+                  className="w-full rounded-xl p-3.5 text-slate-700 bg-[#f8fafc] border border-slate-200/60 focus:border-emerald-500 focus:bg-white outline-none text-xs font-bold transition-all shadow-xs"
+                />
+              </div>
+
+              {/* Campo: País */}
+              <div className="space-y-1.5">
+                <label className="block text-[11px] text-slate-400 font-bold">
+                  País
+                </label>
+                <div className="relative">
+                  <select
+                    value={profile.country}
+                    onChange={e => {
+                      const c = COUNTRIES.find(x => x.name === e.target.value)
+                      setProfile({
+                        ...profile,
+                        country: c?.name ?? '',
+                        flag: c?.flag ?? ''
+                      })
+                    }}
+                    className="w-full rounded-xl p-3.5 text-slate-700 bg-[#f8fafc] border border-slate-200/60 focus:border-emerald-500 focus:bg-white outline-none text-xs font-bold transition-all appearance-none cursor-pointer shadow-xs"
+                  >
+                    <option value="">
+                      Selecciona tu país 🌎
+                    </option>
+                    {COUNTRIES.map(c => (
+                      <option
+                        key={c.name}
+                        value={c.name}
+                      >
+                        {c.flag} {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-400">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {saved && (
+                <div className="text-emerald-600 text-[11px] font-black text-center bg-emerald-50 py-3 rounded-xl border border-emerald-100 shadow-xs">
+                  ✓ Perfil actualizado con éxito
+                </div>
+              )}
+
+              <div className="pt-2">
+                <button
+                  onClick={saveProfile}
+                  disabled={saving}
+                  className="w-full rounded-xl py-3.5 text-white font-black text-xs bg-[#10b981] hover:bg-[#059669] transition-colors shadow-xs cursor-pointer disabled:opacity-60"
                 >
-                  {c.flag} {c.name}
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-400">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-              </svg>
+                  {saving ? 'Guardando...' : '💾 Guardar cambios'}
+                </button>
+              </div>
             </div>
           </div>
+
         </div>
 
-        {saved && (
-          <div className="text-emerald-600 text-[11px] font-black text-center bg-[#e2faee] py-2 rounded-xl border border-emerald-100">
-            ✓ Perfil actualizado con éxito
-          </div>
-        )}
-
-        <button
-          onClick={saveProfile}
-          disabled={saving}
-          className="w-full rounded-xl py-3 text-white font-black text-xs bg-[#10b981] hover:bg-[#059669] transition-colors shadow-3xs"
-        >
-          {saving ? 'Guardando...' : '💾 Guardar cambios'}
-        </button>
       </div>
-
-      {/* Botón Configuración */}
-      <button
-        onClick={() => navigate('/configuracion')}
-        className="w-full p-4 rounded-[1.5rem] bg-white border border-slate-100/85 hover:bg-slate-50 flex justify-between items-center transition-colors shadow-3xs cursor-pointer text-xs font-black text-slate-700"
-      >
-        <span className="flex items-center gap-2">⚙️ Configuración</span>
-        <span className="text-slate-300">❯</span>
-      </button>
-
     </div>
   )
 }
