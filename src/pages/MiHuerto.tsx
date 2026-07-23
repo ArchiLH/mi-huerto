@@ -211,6 +211,14 @@ export default function MiHuerto() {
   }, [user])
 
   useEffect(() => {
+    const originalBg = document.body.style.backgroundColor
+    document.body.style.backgroundColor = '#e2f3ec'
+    return () => {
+      document.body.style.backgroundColor = originalBg
+    }
+  }, [])
+
+  useEffect(() => {
     const setupAppListener = async () => {
       const { App: CapacitorApp } = await import('@capacitor/app').catch(() => ({ App: null }))
       if (!CapacitorApp) return
@@ -385,7 +393,7 @@ export default function MiHuerto() {
 
   if (loading) {
     return (
-      <div className="w-full min-h-[60vh] flex flex-col justify-center items-center space-y-4">
+      <div className="w-full min-h-screen bg-[#e2f3ec] flex flex-col justify-center items-center space-y-4">
         <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
         <p className="text-xs font-bold text-slate-400">Cargando tu huerto...</p>
       </div>
@@ -393,260 +401,262 @@ export default function MiHuerto() {
   }
 
   return (
-    <div className="w-full space-y-4 sm:space-y-5 pb-12">
+    <div className="w-full min-h-screen bg-[#e2f3ec] p-3 sm:p-6 lg:p-8 flex justify-center">
+      <div className="w-full max-w-[1200px] space-y-4 sm:space-y-5 pb-16 font-sans text-slate-800">
 
-      {/* Toast de Éxito */}
-      {showToast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-xs bg-[#e2faee] border border-emerald-200 text-slate-800 rounded-xl px-4 py-3 flex items-center gap-2.5 shadow-md animate-fadeIn">
-          <span className="text-emerald-600 bg-white w-5 h-5 rounded-md flex items-center justify-center font-bold text-xs border border-emerald-100 shrink-0">
-            ✓
-          </span>
-          <span className="text-xs font-bold text-[#006642]">Espacio actualizado</span>
-        </div>
-      )}
-
-      {/* BIENVENIDA + PLAN PREMIUM */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-xs">
-        <div className="space-y-1">
-          <h1 className="text-lg sm:text-2xl font-black text-[#1e293b] flex items-center gap-1.5 tracking-tight">
-            ¡Hola, {fullName}! <span>👋</span>
-          </h1>
-          <p className="text-xs text-slate-400 font-semibold">
-            {activeCount > 0
-              ? `${activeCount} ${activeCount === 1 ? 'planta activa' : 'plantas activas'} en tu huerto`
-              : 'Asigna plantas a los espacios para empezar'}
-          </p>
-        </div>
-
-        {isPremium ? (
-          <div className="self-start sm:self-auto shrink-0 inline-flex items-center gap-1.5 bg-[#ff9100] text-white font-black text-[11px] px-4 py-2 rounded-xl shadow-xs">
-            👑 Plan Premium
+        {/* Toast de Éxito */}
+        {showToast && (
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-xs bg-[#e2faee] border border-emerald-200 text-slate-800 rounded-xl px-4 py-3 flex items-center gap-2.5 shadow-md animate-fadeIn">
+            <span className="text-emerald-600 bg-white w-5 h-5 rounded-md flex items-center justify-center font-bold text-xs border border-emerald-100 shrink-0">
+              ✓
+            </span>
+            <span className="text-xs font-bold text-[#006642]">Espacio actualizado</span>
           </div>
-        ) : (
-          <button
-            onClick={handleStripeCheckout}
-            disabled={isRedirecting}
-            className="self-start sm:self-auto shrink-0 inline-flex items-center gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black text-[11px] px-4 py-2 rounded-xl shadow-xs transition transform active:scale-95 hover:from-emerald-600 hover:to-teal-700 cursor-pointer disabled:opacity-50"
-          >
-            {isRedirecting ? '⚡ Cargando...' : '⚡ Obtener Premium'}
-          </button>
         )}
-      </div>
 
-      {/* CONTADORES */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
-        <div className="bg-white rounded-2xl p-2.5 sm:p-3 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.15)] flex items-center gap-2 sm:gap-2.5">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#e2faee] text-[#009660] flex items-center justify-center text-sm sm:text-base shrink-0">
-            🌱
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs sm:text-sm font-black text-slate-800 leading-none">{healthyCount}</p>
-            <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold mt-1">Bien</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-2.5 sm:p-3 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.15)] flex items-center gap-2 sm:gap-2.5">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-sm sm:text-base shrink-0">
-            ⚠️
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs sm:text-sm font-black text-slate-800 leading-none">{alertCount}</p>
-            <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold mt-1">Alertas</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-2.5 sm:p-3 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.15)] flex items-center gap-2 sm:gap-2.5">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center text-sm sm:text-base shrink-0">
-            🏠
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs sm:text-sm font-black text-slate-800 leading-none">{activeCount}</p>
-            <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold mt-1">Plantas</p>
-          </div>
-        </div>
-      </div>
-
-      {/* BANNER DE ALERTAS */}
-      {alertCount > 0 && (
-        <button
-          onClick={() => window.location.assign('/alertas')}
-          className="w-full flex items-center justify-between gap-2 bg-red-50 border border-red-100 text-red-500 rounded-2xl px-4 py-3 text-xs font-bold transition hover:bg-red-100/70 cursor-pointer shadow-xs"
-        >
-          <span className="flex items-center gap-2">
-            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-            </svg>
-            {alertCount} {alertCount === 1 ? 'alerta necesita' : 'alertas necesitan'} atención
-          </span>
-          <span>→</span>
-        </button>
-      )}
-
-      {/* MIS ESPACIOS */}
-      <div className="space-y-3 pt-1">
-        <div className="flex items-center justify-between pl-1">
-          <h3 className="font-extrabold text-[#1e293b] text-sm flex items-center gap-1.5">
-            🌻 Mis espacios
-          </h3>
-          <span className="text-[10px] text-slate-400 font-black tracking-wide">
-            {activeCount}/{isPremium ? PREMIUM_LIMIT : FREE_LIMIT} ocupados
-          </span>
-        </div>
-
-        {/* CUADRÍCULA RESPONSIVE PARA CELULARES Y COMPUTADORAS */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
-          {visibleSpaces.map(space => (
-            <SpaceCard
-              key={space.id}
-              space={space}
-              onAssignSensor={() => handleOpenAssignModal(space.id)}
-              onRemoveSensor={(id) => handleRemoveSensor(id)}
-              onOpenPlantModal={() => handleOpenPlantModal(space)}
-              onVerDetalle={() => setDetalleSpace(space)}
-            />
-          ))}
-
-          {!isPremium && lockedSpaces.map(space => (
-            <LockedSpaceCard key={space.id} onUnlock={handleStripeCheckout} />
-          ))}
-
-          {isPremium && lockedSpaces.map(space => (
-            <SpaceCard
-              key={space.id}
-              space={space}
-              onAssignSensor={() => handleOpenAssignModal(space.id)}
-              onRemoveSensor={(id) => handleRemoveSensor(id)}
-              onOpenPlantModal={() => handleOpenPlantModal(space)}
-              onVerDetalle={() => setDetalleSpace(space)}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* MODAL VER DETALLE */}
-      {detalleSpace && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="w-full max-w-sm bg-white rounded-[2rem] overflow-hidden shadow-2xl border border-slate-100 p-6 space-y-4 animate-fadeIn">
-            <div className="flex items-center justify-between pb-1">
-              <h3 className="font-black text-sm text-slate-800 flex items-center gap-2 truncate">
-                {detalleSpace.plant_catalog?.emoji ?? '🌿'} {detalleSpace.plant_catalog?.name ?? detalleSpace.name}
-              </h3>
-              <button
-                onClick={() => setDetalleSpace(null)}
-                className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 font-bold text-xs cursor-pointer hover:bg-slate-200"
-              >
-                ✕
-              </button>
-            </div>
-            <p className="text-[11px] text-slate-400 font-bold">{detalleSpace.name}</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-orange-50 rounded-2xl p-4 text-center">
-                <p className="text-xl font-black text-orange-500">
-                  {detalleSpace.latest_reading ? `${detalleSpace.latest_reading.temperature.toFixed(1)}°C` : '--'}
-                </p>
-                <p className="text-[10px] text-slate-400 font-bold mt-1">Temperatura</p>
-              </div>
-              <div className="bg-blue-50 rounded-2xl p-4 text-center">
-                <p className="text-xl font-black text-blue-500">
-                  {detalleSpace.latest_reading ? `${detalleSpace.latest_reading.humidity.toFixed(1)}%` : '--'}
-                </p>
-                <p className="text-[10px] text-slate-400 font-bold mt-1">Humedad</p>
-              </div>
-            </div>
-            <p className="text-[10px] text-slate-400 font-semibold text-center">
-              {detalleSpace.unacknowledged_alerts
-                ? `⚠️ ${detalleSpace.unacknowledged_alerts} alerta(s) sin revisar para este espacio.`
-                : '✓ Sin alertas pendientes en este espacio.'}
+        {/* BIENVENIDA + PLAN PREMIUM */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#e2f3ec] p-4 sm:p-6 rounded-3xl border border-emerald-200 shadow-xs">
+          <div className="space-y-1">
+            <h1 className="text-lg sm:text-2xl font-black text-[#1e293b] flex items-center gap-1.5 tracking-tight">
+              ¡Hola, {fullName}! <span>👋</span>
+            </h1>
+            <p className="text-xs text-slate-600 font-semibold">
+              {activeCount > 0
+                ? `${activeCount} ${activeCount === 1 ? 'planta activa' : 'plantas activas'} en tu huerto`
+                : 'Asigna plantas a los espacios para empezar'}
             </p>
           </div>
-        </div>
-      )}
 
-      {/* MODAL ASIGNAR PLANTA */}
-      {plantModalSpace && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="w-full max-w-sm bg-white rounded-[2rem] overflow-hidden shadow-2xl border border-slate-100 p-6 space-y-5 animate-fadeIn">
-            <div className="flex items-center justify-between pb-1">
-              <h3 className="font-black text-sm text-slate-800 flex items-center gap-2 truncate">
-                🌱 Asignar planta — {plantModalSpace.name}
-              </h3>
-              <button
-                onClick={() => setPlantModalSpace(null)}
-                className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 font-bold text-xs cursor-pointer hover:bg-slate-200"
-              >
-                ✕
-              </button>
+          {isPremium ? (
+            <div className="self-start sm:self-auto shrink-0 inline-flex items-center gap-1.5 bg-[#ff9100] text-white font-black text-[11px] px-4 py-2 rounded-xl shadow-xs">
+              👑 Plan Premium
             </div>
-
-            <div className="relative">
-              <select
-                value={selectedPlantId ?? ''}
-                onChange={e => setSelectedPlantId(Number(e.target.value) || null)}
-                className="w-full bg-white border border-emerald-400 text-slate-700 rounded-xl px-4 py-3 outline-none text-xs font-extrabold appearance-none cursor-pointer shadow-xs"
-              >
-                <option value="">Seleccionar planta...</option>
-                {plants.map(plant => (
-                  <option key={plant.id} value={plant.id}>
-                    {plant.emoji} {plant.name}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-400">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                </svg>
-              </div>
-            </div>
-
+          ) : (
             <button
-              onClick={handleSavePlant}
-              className="w-full text-white font-extrabold rounded-xl py-3 text-xs bg-[#10b981] hover:bg-[#059669] transition-colors cursor-pointer shadow-xs"
+              onClick={handleStripeCheckout}
+              disabled={isRedirecting}
+              className="self-start sm:self-auto shrink-0 inline-flex items-center gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black text-[11px] px-4 py-2 rounded-xl shadow-xs transition transform active:scale-95 hover:from-emerald-600 hover:to-teal-700 cursor-pointer disabled:opacity-50"
             >
-              Guardar
+              {isRedirecting ? '⚡ Cargando...' : '⚡ Obtener Premium'}
             </button>
+          )}
+        </div>
+
+        {/* CONTADORES */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <div className="bg-white rounded-2xl p-3 sm:p-4 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.15)] flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#e2faee] text-[#009660] flex items-center justify-center text-sm sm:text-lg shrink-0">
+              🌱
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-black text-slate-800 leading-none">{healthyCount}</p>
+              <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold mt-1">Bien</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-3 sm:p-4 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.15)] flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-sm sm:text-lg shrink-0">
+              ⚠️
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-black text-slate-800 leading-none">{alertCount}</p>
+              <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold mt-1">Alertas</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-3 sm:p-4 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.15)] flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center text-sm sm:text-lg shrink-0">
+              🏠
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-black text-slate-800 leading-none">{activeCount}</p>
+              <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold mt-1">Plantas</p>
+            </div>
           </div>
         </div>
-      )}
 
-      {/* MODAL CONECTAR SENSOR */}
-      {assigningToSpaceId && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="w-full max-w-xs bg-white rounded-[2rem] overflow-hidden shadow-2xl border border-slate-100 p-5 space-y-4 animate-fadeIn">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <h3 className="font-black text-xs text-slate-800">📡 Conectar Sensor</h3>
+        {/* BANNER DE ALERTAS */}
+        {alertCount > 0 && (
+          <button
+            onClick={() => window.location.assign('/alertas')}
+            className="w-full flex items-center justify-between gap-2 bg-red-50 border border-red-100 text-red-500 rounded-2xl px-4 py-3 text-xs font-bold transition hover:bg-red-100/70 cursor-pointer shadow-xs"
+          >
+            <span className="flex items-center gap-2">
+              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+              {alertCount} {alertCount === 1 ? 'alerta necesita' : 'alertas necesitan'} atención
+            </span>
+            <span>→</span>
+          </button>
+        )}
+
+        {/* MIS ESPACIOS */}
+        <div className="space-y-3 pt-1">
+          <div className="flex items-center justify-between pl-1">
+            <h3 className="font-extrabold text-[#1e293b] text-sm flex items-center gap-1.5">
+              🌻 Mis espacios
+            </h3>
+            <span className="text-[10px] text-slate-400 font-black tracking-wide">
+              {activeCount}/{isPremium ? PREMIUM_LIMIT : FREE_LIMIT} ocupados
+            </span>
+          </div>
+
+          {/* CUADRÍCULA RESPONSIVE */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+            {visibleSpaces.map(space => (
+              <SpaceCard
+                key={space.id}
+                space={space}
+                onAssignSensor={() => handleOpenAssignModal(space.id)}
+                onRemoveSensor={(id) => handleRemoveSensor(id)}
+                onOpenPlantModal={() => handleOpenPlantModal(space)}
+                onVerDetalle={() => setDetalleSpace(space)}
+              />
+            ))}
+
+            {!isPremium && lockedSpaces.map(space => (
+              <LockedSpaceCard key={space.id} onUnlock={handleStripeCheckout} />
+            ))}
+
+            {isPremium && lockedSpaces.map(space => (
+              <SpaceCard
+                key={space.id}
+                space={space}
+                onAssignSensor={() => handleOpenAssignModal(space.id)}
+                onRemoveSensor={(id) => handleRemoveSensor(id)}
+                onOpenPlantModal={() => handleOpenPlantModal(space)}
+                onVerDetalle={() => setDetalleSpace(space)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* MODAL VER DETALLE */}
+        {detalleSpace && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+            <div className="w-full max-w-sm bg-white rounded-[2rem] overflow-hidden shadow-2xl border border-slate-100 p-6 space-y-4 animate-fadeIn">
+              <div className="flex items-center justify-between pb-1">
+                <h3 className="font-black text-sm text-slate-800 flex items-center gap-2 truncate">
+                  {detalleSpace.plant_catalog?.emoji ?? '🌿'} {detalleSpace.plant_catalog?.name ?? detalleSpace.name}
+                </h3>
+                <button
+                  onClick={() => setDetalleSpace(null)}
+                  className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 font-bold text-xs cursor-pointer hover:bg-slate-200"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-400 font-bold">{detalleSpace.name}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-orange-50 rounded-2xl p-4 text-center">
+                  <p className="text-xl font-black text-orange-500">
+                    {detalleSpace.latest_reading ? `${detalleSpace.latest_reading.temperature.toFixed(1)}°C` : '--'}
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-bold mt-1">Temperatura</p>
+                </div>
+                <div className="bg-blue-50 rounded-2xl p-4 text-center">
+                  <p className="text-xl font-black text-blue-500">
+                    {detalleSpace.latest_reading ? `${detalleSpace.latest_reading.humidity.toFixed(1)}%` : '--'}
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-bold mt-1">Humedad</p>
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-400 font-semibold text-center">
+                {detalleSpace.unacknowledged_alerts
+                  ? `⚠️ ${detalleSpace.unacknowledged_alerts} alerta(s) sin revisar para este espacio.`
+                  : '✓ Sin alertas pendientes en este espacio.'}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL ASIGNAR PLANTA */}
+        {plantModalSpace && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+            <div className="w-full max-w-sm bg-white rounded-[2rem] overflow-hidden shadow-2xl border border-slate-100 p-6 space-y-5 animate-fadeIn">
+              <div className="flex items-center justify-between pb-1">
+                <h3 className="font-black text-sm text-slate-800 flex items-center gap-2 truncate">
+                  🌱 Asignar planta — {plantModalSpace.name}
+                </h3>
+                <button
+                  onClick={() => setPlantModalSpace(null)}
+                  className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 font-bold text-xs cursor-pointer hover:bg-slate-200"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="relative">
+                <select
+                  value={selectedPlantId ?? ''}
+                  onChange={e => setSelectedPlantId(Number(e.target.value) || null)}
+                  className="w-full bg-white border border-emerald-400 text-slate-700 rounded-xl px-4 py-3 outline-none text-xs font-extrabold appearance-none cursor-pointer shadow-xs"
+                >
+                  <option value="">Seleccionar planta...</option>
+                  {plants.map(plant => (
+                    <option key={plant.id} value={plant.id}>
+                      {plant.emoji} {plant.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </div>
+              </div>
+
               <button
-                onClick={() => setAssigningToSpaceId(null)}
-                className="w-6 h-6 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 font-bold text-xs cursor-pointer hover:bg-slate-200"
+                onClick={handleSavePlant}
+                className="w-full text-white font-extrabold rounded-xl py-3 text-xs bg-[#10b981] hover:bg-[#059669] transition-colors cursor-pointer shadow-xs"
               >
-                ✕
+                Guardar
               </button>
             </div>
-
-            {availableSensors.length === 0 ? (
-              <div className="text-center py-4 space-y-2">
-                <p className="text-2xl">📡</p>
-                <p className="text-[10px] text-slate-400 font-bold leading-normal">
-                  No hay sensores libres actualmente.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
-                {availableSensors.map(sensor => (
-                  <button
-                    key={sensor.id}
-                    onClick={() => handleAssignSensor(sensor.id)}
-                    className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-left hover:border-emerald-300 transition-colors cursor-pointer"
-                  >
-                    <span className="text-[11px] font-bold text-slate-700 truncate">{sensor.name}</span>
-                    <span className="text-[#009660] font-black text-[10px] shrink-0 ml-2">Asignar ›</span>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
-        </div>
-      )}
+        )}
 
+        {/* MODAL CONECTAR SENSOR */}
+        {assigningToSpaceId && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+            <div className="w-full max-w-xs bg-white rounded-[2rem] overflow-hidden shadow-2xl border border-slate-100 p-5 space-y-4 animate-fadeIn">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <h3 className="font-black text-xs text-slate-800">📡 Conectar Sensor</h3>
+                <button
+                  onClick={() => setAssigningToSpaceId(null)}
+                  className="w-6 h-6 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 font-bold text-xs cursor-pointer hover:bg-slate-200"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {availableSensors.length === 0 ? (
+                <div className="text-center py-4 space-y-2">
+                  <p className="text-2xl">📡</p>
+                  <p className="text-[10px] text-slate-400 font-bold leading-normal">
+                    No hay sensores libres actualmente.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
+                  {availableSensors.map(sensor => (
+                    <button
+                      key={sensor.id}
+                      onClick={() => handleAssignSensor(sensor.id)}
+                      className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-left hover:border-emerald-300 transition-colors cursor-pointer"
+                    >
+                      <span className="text-[11px] font-bold text-slate-700 truncate">{sensor.name}</span>
+                      <span className="text-[#009660] font-black text-[10px] shrink-0 ml-2">Asignar ›</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+      </div>
     </div>
   )
 }

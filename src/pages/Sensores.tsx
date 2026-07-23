@@ -35,6 +35,14 @@ export default function Sensores() {
     if (user) loadData()
   }, [user, isPremium])
 
+  useEffect(() => {
+    const originalBg = document.body.style.backgroundColor
+    document.body.style.backgroundColor = '#e2f3ec'
+    return () => {
+      document.body.style.backgroundColor = originalBg
+    }
+  }, [])
+
   const loadData = async () => {
     if (!user) return
 
@@ -141,7 +149,7 @@ export default function Sensores() {
 
   if (loading) {
     return (
-      <div className="w-full min-h-[60vh] flex flex-col justify-center items-center space-y-4 bg-[#f4f7f5]">
+      <div className="w-full min-h-screen bg-[#e2f3ec] flex flex-col justify-center items-center space-y-4">
         <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
         <p className="text-xs font-bold text-slate-400">Cargando sensores...</p>
       </div>
@@ -149,11 +157,11 @@ export default function Sensores() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-[#f4f7f5] p-3 sm:p-6 lg:p-8 flex justify-center">
-      <div className="w-full max-w-[1200px] space-y-6 pb-16 font-sans text-slate-800">
+    <div className="w-full min-h-screen bg-[#e2f3ec] p-3 sm:p-6 lg:p-8 flex justify-center">
+      <div className="w-full max-w-[1400px] space-y-6 pb-16 font-sans text-slate-800">
 
         {/* HEADER PRINCIPAL */}
-        <div className="space-y-1 bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-xs">
+        <div className="space-y-1 bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-xs">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h1 className="text-xl sm:text-2xl font-black text-[#1e293b] tracking-tight flex items-center gap-2">
               Sensores 📡
@@ -169,14 +177,14 @@ export default function Sensores() {
 
         {/* INDICADORES DE USO */}
         <div className="grid grid-cols-2 gap-3 max-w-md">
-          <div className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs flex items-center gap-3">
+          <div className="bg-white p-3.5 rounded-2xl border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] flex items-center gap-3">
             <span className="text-emerald-500 text-lg">✅</span>
             <div>
               <p className="text-sm font-black text-slate-800">{activeSensors.length}</p>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Activos</p>
             </div>
           </div>
-          <div className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs flex items-center gap-3">
+          <div className="bg-white p-3.5 rounded-2xl border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] flex items-center gap-3">
             <span className="text-slate-300 text-lg">🔳</span>
             <div>
               <p className="text-sm font-black text-slate-800">{inactiveSensors.length}</p>
@@ -191,7 +199,7 @@ export default function Sensores() {
             {sensors.map(sensor => (
               <div
                 key={sensor.id}
-                className={`bg-white rounded-2xl p-4 sm:p-5 border transition-all flex flex-col justify-between ${
+                className={`bg-white rounded-3xl p-4 sm:p-5 border transition-all flex flex-col justify-between ${
                   sensor.active 
                     ? 'border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)]' 
                     : 'border-slate-200/60 opacity-75 shadow-xs'
@@ -226,7 +234,7 @@ export default function Sensores() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 rounded-xl p-2.5 mb-3 bg-[#f8faf9] border border-slate-100">
+                  <div className="grid grid-cols-2 gap-2 rounded-2xl p-2.5 mb-3 bg-[#f8faf9] border border-slate-100">
                     <div className="text-[10px] font-bold text-slate-500 flex items-center gap-1 justify-center">
                       <span>Temp:</span>
                       <span className="text-orange-600 font-extrabold">{sensor.min_temp}°C – {sensor.max_temp}°C</span>
@@ -241,7 +249,7 @@ export default function Sensores() {
                 <div>
                   <button
                     onClick={() => openEdit(sensor)}
-                    className="w-full py-2.5 rounded-xl text-[10px] font-bold bg-[#e2faee] hover:bg-[#cbf3de] text-[#008f51] transition-colors cursor-pointer border border-emerald-200/60 shadow-3xs"
+                    className="w-full py-2.5 rounded-2xl text-[10px] font-bold bg-[#e2faee] hover:bg-[#cbf3de] text-[#008f51] transition-colors cursor-pointer border border-emerald-200/60 shadow-3xs"
                   >
                     ✏️ Configurar rangos y espacio
                   </button>
@@ -254,7 +262,7 @@ export default function Sensores() {
         {/* MODAL PARA EDITAR */}
         {editingSensor && (
           <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs animate-fadeIn">
-            <div className="w-full max-w-sm bg-white rounded-[2rem] overflow-hidden shadow-2xl border border-slate-100 flex flex-col">
+            <div className="w-full max-w-sm bg-white rounded-3xl overflow-hidden shadow-2xl border border-slate-100 flex flex-col">
               <div className="px-5 py-4 flex items-center justify-between border-b border-slate-100">
                 <h3 className="font-extrabold text-sm text-slate-800">
                   ✏️ Configurar {editingSensor.name}
@@ -274,7 +282,7 @@ export default function Sensores() {
                     <select
                       value={form.space_id}
                       onChange={e => setForm({ ...form, space_id: e.target.value })}
-                      className="w-full bg-[#f4f7f5] border border-slate-200/60 text-slate-700 rounded-xl px-4 py-2.5 outline-none text-xs font-semibold appearance-none cursor-pointer"
+                      className="w-full bg-[#f4f7f5] border border-slate-200/60 text-slate-700 rounded-2xl px-4 py-2.5 outline-none text-xs font-semibold appearance-none cursor-pointer"
                     >
                       <option value="">Sin espacio asignado</option>
                       {spaces.map(s => (
@@ -302,7 +310,7 @@ export default function Sensores() {
                         type="number"
                         value={form[field.key as keyof typeof form]}
                         onChange={e => setForm({ ...form, [field.key]: Number(e.target.value) })}
-                        className="w-full bg-[#f4f7f5] border border-slate-200/60 text-slate-800 rounded-xl px-3 py-2 outline-none text-xs font-bold shadow-xs"
+                        className="w-full bg-[#f4f7f5] border border-slate-200/60 text-slate-800 rounded-2xl px-3 py-2 outline-none text-xs font-bold shadow-xs"
                       />
                     </div>
                   ))}
@@ -310,7 +318,7 @@ export default function Sensores() {
 
                 <button
                   onClick={saveSensor}
-                  className="w-full text-white font-bold rounded-xl py-3 text-xs bg-[#009660] hover:bg-[#008152] transition-colors shadow-xs cursor-pointer"
+                  className="w-full text-white font-bold rounded-2xl py-3 text-xs bg-[#009660] hover:bg-[#008152] transition-colors shadow-xs cursor-pointer"
                 >
                   💾 Guardar cambios
                 </button>

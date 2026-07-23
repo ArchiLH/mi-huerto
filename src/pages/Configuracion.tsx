@@ -26,6 +26,14 @@ export default function Configuracion() {
     fetchProfileName()
   }, [user])
 
+  useEffect(() => {
+    const originalBg = document.body.style.backgroundColor
+    document.body.style.backgroundColor = '#e2f3ec'
+    return () => {
+      document.body.style.backgroundColor = originalBg
+    }
+  }, [])
+
   // Obtener dos iniciales (Ej: "Jesus Dominguez" -> "JD")
   const getInitials = (name: string) => {
     if (!name) return 'U'
@@ -40,11 +48,11 @@ export default function Configuracion() {
   const displayName = profileName || user?.email?.split('@')[0] || 'Usuario'
 
   return (
-    <div className="w-full min-h-screen bg-[#f4f7f5] p-3 sm:p-6 lg:p-8 flex justify-center">
-      <div className="w-full max-w-[1200px] space-y-6 pb-16 font-sans text-slate-800">
+    <div className="w-full min-h-screen bg-[#e2f3ec] p-3 sm:p-6 lg:p-8 flex justify-center">
+      <div className="w-full max-w-[1400px] space-y-6 pb-16 font-sans text-slate-800">
 
         {/* HEADER DE AJUSTES */}
-        <div className="space-y-1 bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-xs">
+        <div className="space-y-1 bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-xs">
           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
             Ajustes
           </span>
@@ -62,7 +70,7 @@ export default function Configuracion() {
           {/* TARJETA DE USUARIO (Clickeable para ir al Perfil) */}
           <div 
             onClick={() => navigate('/perfil')}
-            className="bg-white rounded-[2rem] p-5 sm:p-6 flex items-center justify-between gap-4 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] hover:border-emerald-400 transition-all cursor-pointer group"
+            className="bg-white rounded-3xl p-5 sm:p-6 flex items-center justify-between gap-4 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] hover:border-emerald-400 transition-all cursor-pointer group"
           >
             <div className="flex items-center gap-4 min-w-0">
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xs shrink-0 bg-[#e2faee] text-[#009660] border border-emerald-200 shadow-xs">
@@ -81,7 +89,7 @@ export default function Configuracion() {
           </div>
 
           {/* HERRAMIENTAS */}
-          <div className="bg-white rounded-[2rem] p-5 sm:p-6 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] space-y-3">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] space-y-3">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 pl-1">
               🛠️ Herramientas y Accesos
             </p>
@@ -91,7 +99,6 @@ export default function Configuracion() {
                 { icon: '👤', label: 'Editar perfil y datos', desc: 'Cambia tu nombre, país y fecha', path: '/perfil' },
                 { icon: '🧪', label: 'Simulador de lecturas', desc: 'Envía datos de prueba', path: '/simulador' },
                 { icon: '📈', label: 'Historial de lecturas', desc: 'Ve la evolución de tus plantas', path: '/reportes' },
-                { icon: '📡', label: 'Gestionar sensores', desc: 'Configura tus dispositivos', path: '/sensores' },
               ].map((item, i) => (
                 <button
                   key={i}

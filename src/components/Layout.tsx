@@ -12,7 +12,8 @@ const navItems = [
   { to: '/alertas', icon: '🔔', label: 'Alertas' },
   { to: '/reportes', icon: '📊', label: 'Historial' },
   { to: '/plantas', icon: '🌿', label: 'Mis Plantas' },
-  { to: '/configuracion', icon: '📡', label: 'Sensores' },
+  { to: '/sensores', icon: '📡', label: 'Sensores' },
+  { to: '/configuracion', icon: '⚙️', label: 'Configuración' },
 ]
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -109,7 +110,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const displayName = profileName || user?.email || 'Usuario'
 
-  // Función para obtener las iniciales (Ej: "Jesus Dominguez" -> "JD")
   const getInitials = (name: string) => {
     if (!name) return 'U'
     const parts = name.trim().split(/\s+/)
@@ -122,7 +122,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const userInitials = getInitials(displayName)
 
   return (
-    <div className="min-h-screen w-full bg-[#f4f7f5] text-slate-800 font-sans antialiased flex overflow-x-hidden">
+    <div className="min-h-screen w-full bg-[#e2f3ec] text-slate-800 font-sans antialiased flex overflow-x-hidden">
 
       {/* OVERLAY MÓVIL */}
       {isSidebarOpen && (
@@ -181,7 +181,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </button>
             )}
             
-            {/* Clic en la tarjeta inferior del sidebar también te lleva al Perfil */}
             <div 
               onClick={() => navigate('/perfil')}
               className="bg-[#184a30] rounded-xl p-3 flex items-center gap-3 cursor-pointer hover:bg-[#15432b] transition-colors"
@@ -199,7 +198,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* CONTENEDOR DERECHO */}
-      <div className="min-h-screen flex-1 flex flex-col min-w-0 relative bg-[#f4f7f5]">
+      <div className="min-h-screen flex-1 flex flex-col min-w-0 relative bg-[#e2f3ec]">
         <header className="bg-white border-b border-slate-100/80 px-4 py-3 flex items-center justify-between sticky top-0 z-40">
           <div className="flex items-center gap-3">
             <button
@@ -219,7 +218,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </button>
           </div>
 
-          {/* DERECHA DEL HEADER: ESTADO Y CÍRCULO CON INICIALES (TE LLEVA A /perfil) */}
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-2 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -236,9 +234,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* CONTENIDO PRINCIPAL RESPONSIVE */}
-        <main className="w-full flex-1 flex flex-col items-center">
-          <div className="w-full max-w-[1400px] px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+        {/* CONTENIDO PRINCIPAL CENTRADO Y RESPONSIVE */}
+        <main className="w-full flex-1 flex flex-col justify-start items-center bg-[#e2f3ec]">
+          <div className="w-full max-w-[1500px] px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
             {children}
           </div>
         </main>

@@ -36,6 +36,14 @@ export default function Reportes() {
 
   useEffect(() => { loadReportes() }, [])
 
+  useEffect(() => {
+    const originalBg = document.body.style.backgroundColor
+    document.body.style.backgroundColor = '#e2f3ec'
+    return () => {
+      document.body.style.backgroundColor = originalBg
+    }
+  }, [])
+
   const loadReportes = async () => {
     if (!user) return
 
@@ -120,7 +128,7 @@ export default function Reportes() {
 
   if (loading) {
     return (
-      <div className="w-full min-h-[60vh] flex flex-col justify-center items-center space-y-4 bg-[#f4f7f5]">
+      <div className="w-full min-h-[60vh] flex flex-col justify-center items-center space-y-4 bg-[#e2f3ec]">
         <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
         <p className="text-xs font-bold text-slate-400">Cargando panel de control...</p>
       </div>
@@ -128,11 +136,11 @@ export default function Reportes() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-[#f4f7f5] p-3 sm:p-6 lg:p-8 flex justify-center">
-      <div className="w-full max-w-[1200px] space-y-6 pb-16 font-sans text-slate-800">
+    <div className="w-full min-h-screen bg-[#e2f3ec] p-3 sm:p-6 lg:p-8">
+      <div className="w-full max-w-[1400px] mx-auto space-y-6 pb-16 font-sans text-slate-800">
 
         {/* HEADER LIMPIO */}
-        <div className="space-y-1 bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-xs">
+        <div className="space-y-1 bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-xs">
           <div className="flex items-center justify-between">
             <h1 className="text-xl sm:text-2xl font-black text-[#1e293b] tracking-tight">
               Panel de control 📊
@@ -174,7 +182,7 @@ export default function Reportes() {
 
             {/* TOTAL PLANTAS Y ALERTAS ACTIVAS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div className="bg-white rounded-2xl p-5 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] flex flex-col justify-between">
+              <div className="bg-white rounded-3xl p-5 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] flex flex-col justify-between">
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 text-xl flex items-center justify-center mb-3">
                   🌱
                 </div>
@@ -187,7 +195,7 @@ export default function Reportes() {
                 </div>
               </div>
 
-              <div className={`bg-white rounded-2xl p-5 border flex flex-col justify-between transition-all ${
+              <div className={`bg-white rounded-3xl p-5 border flex flex-col justify-between transition-all ${
                 stats.totalAlerts > 0 ? 'border-red-200 shadow-xs bg-red-50/5' : 'border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)]'
               }`}>
                 <div className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center mb-3 ${
@@ -209,7 +217,7 @@ export default function Reportes() {
 
             {/* TEMPERATURA Y HUMEDAD PROMEDIO */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div className="bg-white rounded-2xl p-5 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] flex flex-col justify-between">
+              <div className="bg-white rounded-3xl p-5 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] flex flex-col justify-between">
                 <div className="w-10 h-10 rounded-xl bg-orange-50 text-xl flex items-center justify-center mb-3">
                   🌡️
                 </div>
@@ -224,7 +232,7 @@ export default function Reportes() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-5 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] flex flex-col justify-between">
+              <div className="bg-white rounded-3xl p-5 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] flex flex-col justify-between">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 text-xl flex items-center justify-center mb-3">
                   💧
                 </div>
@@ -242,11 +250,11 @@ export default function Reportes() {
 
             {/* ESPACIOS FUNCIONANDO BIEN VS CRÍTICOS */}
             <div className="grid grid-cols-2 gap-3.5">
-              <div className="bg-white rounded-2xl p-4 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)]">
+              <div className="bg-white rounded-3xl p-4 sm:p-5 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)]">
                 <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Espacios Estables</p>
                 <p className="text-2xl font-black text-emerald-600 mt-1">{String(stats.healthySpaces).padStart(2, '0')}</p>
               </div>
-              <div className="bg-white rounded-2xl p-4 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)]">
+              <div className="bg-white rounded-3xl p-4 sm:p-5 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)]">
                 <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Con Problemas</p>
                 <p className={`text-2xl font-black mt-1 ${stats.warningSpaces > 0 ? 'text-amber-500' : 'text-slate-400'}`}>
                   {String(stats.warningSpaces).padStart(2, '0')}
@@ -258,7 +266,7 @@ export default function Reportes() {
             {stats.totalAlerts > 0 && (
               <button
                 onClick={() => navigate('/alertas')}
-                className="w-full py-3.5 rounded-xl text-xs font-extrabold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition shadow-xs cursor-pointer"
+                className="w-full py-3.5 rounded-2xl text-xs font-extrabold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition shadow-xs cursor-pointer"
               >
                 ⚠️ Ver {stats.totalAlerts} alerta{stats.totalAlerts !== 1 ? 's' : ''} pendiente{stats.totalAlerts !== 1 ? 's' : ''}
               </button>
@@ -282,7 +290,7 @@ export default function Reportes() {
                 {spaceStats.filter(s => s.plant_name !== '').map((s, i) => (
                   <div
                     key={i}
-                    className={`bg-white rounded-2xl p-4 sm:p-5 border transition-all ${
+                    className={`bg-white rounded-3xl p-4 sm:p-5 border transition-all ${
                       s.status === 'warning' ? 'border-red-200 bg-red-50/5 shadow-xs' : 'border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)]'
                     }`}
                   >
@@ -349,7 +357,7 @@ export default function Reportes() {
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {/* COMPORTAMIENTO TEMPERATURA POR PLANTA */}
-                <div className="bg-white rounded-2xl p-5 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] space-y-3">
+                <div className="bg-white rounded-3xl p-5 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] space-y-3">
                   <div className="flex items-center justify-between">
                     <h2 className="font-black text-slate-700 text-xs">🌡️ Temperatura por planta</h2>
                     <span className="text-[10px] bg-slate-50 border border-slate-200/60 px-2 py-0.5 rounded-md text-slate-500 font-bold">
@@ -373,7 +381,7 @@ export default function Reportes() {
                 </div>
 
                 {/* COMPORTAMIENTO HUMEDAD POR PLANTA */}
-                <div className="bg-white rounded-2xl p-5 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] space-y-3">
+                <div className="bg-white rounded-3xl p-5 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] space-y-3">
                   <div className="flex items-center justify-between">
                     <h2 className="font-black text-slate-700 text-xs">💧 Humedad por planta</h2>
                     <span className="text-[10px] bg-slate-50 border border-slate-200/60 px-2 py-0.5 rounded-md text-slate-500 font-bold">
@@ -403,7 +411,7 @@ export default function Reportes() {
                 </div>
 
                 {/* LEYENDA DETALLADA */}
-                <div className="bg-white rounded-2xl p-5 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] lg:col-span-2 space-y-3">
+                <div className="bg-white rounded-3xl p-5 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] lg:col-span-2 space-y-3">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
                     📋 Lista de referencias
                   </p>

@@ -18,7 +18,6 @@ import Perfil from './pages/Perfil'
 import ResetPassword from './pages/ResetPassword'
 import { PremiumProvider } from './context/PremiumContext'
 
-
 function AppRoutes() {
   const { user, loading } = useAuth()
   const navigate = useNavigate()
@@ -29,19 +28,18 @@ function AppRoutes() {
       const url = data.url
       if (url.includes('reset-password') || url.includes('type=recovery')) {
         const hash = url.includes('#') ? '#' + url.split('#')[1] : ''
-        window.location.href = '/reset-password' + hash
+        navigate('/reset-password' + hash)
       }
       if (url.includes('success') && url.includes('user_id')) {
         const params = url.split('?')[1] ?? ''
         navigate(`/success?${params}`)
-        
       }
     })
 
     return () => {
       CapApp.removeAllListeners()
     }
-  }, [])
+  }, [navigate])
 
   if (loading) {
     return (
@@ -59,34 +57,48 @@ function AppRoutes() {
     )
   }
 
-  // Páginas sin Layout
-  if (window.location.pathname === '/success') {
-    return <Success />
+  // Si no hay usuario autenticado, permitimos ver la pantalla de éxito o recuperación si viene por deep link, o mandamos al Login
+  if (!user) {
+    return (
+      <PremiumProvider>
+        <Routes>
+          <Route path="/success" element={<Success />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="*" element={<Login />} />
+        </Routes>
+      </PremiumProvider>
+    )
   }
-
-  if (window.location.pathname === '/reset-password') {
-    return <ResetPassword />
-  }
-
-  if (!user) return <Login />
 
   return (
     <PremiumProvider>
-    <Layout>
       <Routes>
-        <Route path="/" element={<MiHuerto />} />
-        <Route path="/espacios/:id" element={<Espacios />} />
-        <Route path="/alertas" element={<Alertas />} />
-        <Route path="/sensores" element={<Sensores />} />
-        <Route path="/historial" element={<Historial />} />
-        <Route path="/plantas" element={<Plantas />} />
-        <Route path="/simulador" element={<Simulador />} />
-        <Route path="/configuracion" element={<Configuracion />} />
-        <Route path="/reportes" element={<Reportes />} />
-        <Route path="/perfil" element={<Perfil />} />
-        <Route path="*" element={<Navigate to="/" />} />
+        {/* Rutas sin Layout */}
+        <Route path="/success" element={<Success />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Rutas con Layout principal */}
+        <Route
+          path="/*"
+          element={
+            <Layout>
+              <Routes>
+                <Route path="/" element={<MiHuerto />} />
+                <Route path="/espacios/:id" element={<Espacios />} />
+                <Route path="/alertas" element={<Alertas />} />
+                <Route path="/sensores" element={<Sensores />} />
+                <Route path="/historial" element={<Historial />} />
+                <Route path="/plantas" element={<Plantas />} />
+                <Route path="/simulador" element={<Simulador />} />
+                <Route path="/configuracion" element={<Configuracion />} />
+                <Route path="/reportes" element={<Reportes />} />
+                <Route path="/perfil" element={<Perfil />} />
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </Layout>
+          }
+        />
       </Routes>
-    </Layout>
     </PremiumProvider>
   )
 }

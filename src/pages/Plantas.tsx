@@ -25,6 +25,14 @@ export default function Plantas() {
 
   useEffect(() => { loadPlants() }, [])
 
+  useEffect(() => {
+    const originalBg = document.body.style.backgroundColor
+    document.body.style.backgroundColor = '#e2f3ec'
+    return () => {
+      document.body.style.backgroundColor = originalBg
+    }
+  }, [])
+
   const loadPlants = async () => {
     try {
       const { data } = await supabase.from('plant_catalog').select('*').order('name')
@@ -47,11 +55,11 @@ export default function Plantas() {
   const categories = selectedCategory === 'Todas' ? ['Comestible', 'Aromática'] : [selectedCategory]
 
   return (
-    <div className="w-full min-h-screen bg-[#f4f7f5] p-3 sm:p-6 lg:p-8 flex justify-center">
-      <div className="w-full max-w-[1200px] space-y-6 pb-16 font-sans text-slate-800">
+    <div className="w-full min-h-screen bg-[#e2f3ec] p-3 sm:p-6 lg:p-8 flex justify-center">
+      <div className="w-full max-w-[1400px] space-y-6 pb-16 font-sans text-slate-800">
 
         {/* HEADER DE LA PÁGINA */}
-        <div className="space-y-1 bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-xs">
+        <div className="space-y-1 bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-xs">
           <h1 className="text-xl sm:text-2xl font-black text-[#1e293b] tracking-tight">
             Mis plantas 🌿
           </h1>
@@ -61,7 +69,7 @@ export default function Plantas() {
         </div>
 
         {/* BUSCADOR Y FILTROS SUPERIORES */}
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between bg-white p-4 rounded-3xl border border-slate-100 shadow-xs">
           {/* BUSCADOR */}
           <div className="relative flex-1">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
@@ -70,7 +78,7 @@ export default function Plantas() {
               placeholder="Buscar planta..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full bg-[#f4f7f5] text-slate-800 placeholder-slate-400 rounded-xl pl-10 pr-4 py-2.5 outline-none border border-slate-200/60 text-xs font-semibold focus:border-emerald-500 transition-colors shadow-3xs"
+              className="w-full bg-[#f4f7f5] text-slate-800 placeholder-slate-400 rounded-2xl pl-10 pr-4 py-3 outline-none border border-slate-200/60 text-xs font-semibold focus:border-emerald-500 transition-colors shadow-3xs"
             />
           </div>
 
@@ -80,7 +88,7 @@ export default function Plantas() {
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
+                className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
                   selectedCategory === cat 
                     ? 'bg-[#10b981] text-white border-transparent shadow-xs' 
                     : 'bg-[#f4f7f5] text-slate-500 border-slate-200/60 hover:bg-slate-100'
@@ -96,11 +104,11 @@ export default function Plantas() {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[...Array(2)].map((_, i) => (
-              <div key={i} className="h-80 bg-white rounded-[2rem] animate-pulse border border-slate-100 shadow-xs" />
+              <div key={i} className="h-80 bg-white rounded-3xl animate-pulse border border-slate-100 shadow-xs" />
             ))}
           </div>
         ) : filteredPlants.length === 0 ? (
-          <div className="bg-white rounded-[2rem] border-2 border-dashed border-slate-200 p-10 text-center py-14 shadow-xs">
+          <div className="bg-white rounded-3xl border-2 border-dashed border-slate-200 p-10 text-center py-14 shadow-xs">
             <p className="text-4xl mb-3">🔍</p>
             <p className="text-xs text-slate-400 font-bold">No se encontraron plantas</p>
           </div>
@@ -113,7 +121,7 @@ export default function Plantas() {
               return (
                 <div key={category} className="space-y-4">
                   {/* CATEGORÍA SECCIONAL */}
-                  <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 tracking-widest uppercase pl-1">
+                  <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 tracking-widest uppercase pl-1">
                     <span>{category === 'Comestible' ? '🥗' : '🌸'}</span>
                     <span>PLANTAS {category}S</span>
                   </div>
@@ -123,7 +131,7 @@ export default function Plantas() {
                     {plantsInCat.map(plant => (
                       <div
                         key={plant.id}
-                        className="w-full bg-white rounded-[2rem] p-5 sm:p-6 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] space-y-4 transition-all flex flex-col justify-between"
+                        className="w-full bg-white rounded-3xl p-5 sm:p-6 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] space-y-4 transition-all flex flex-col justify-between"
                       >
                         <div className="space-y-4">
                           {/* CABECERA: EMOJI, NOMBRE Y CATEGORÍA */}
@@ -184,7 +192,7 @@ export default function Plantas() {
                               ].map((item, i) => item.msg && (
                                 <div
                                   key={i}
-                                  className="bg-[#f4f7f5]/70 border border-slate-100/50 rounded-xl p-3 flex gap-2.5 items-start"
+                                  className="bg-[#f4f7f5]/70 border border-slate-100/50 rounded-2xl p-3 flex gap-2.5 items-start"
                                 >
                                   <span className="text-base shrink-0 mt-0.5">{item.icon}</span>
                                   <div className="text-[11px] leading-relaxed">

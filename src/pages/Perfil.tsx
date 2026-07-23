@@ -52,6 +52,14 @@ export default function Perfil() {
     loadAll()
   }, [user])
 
+  useEffect(() => {
+    const originalBg = document.body.style.backgroundColor
+    document.body.style.backgroundColor = '#e2f3ec'
+    return () => {
+      document.body.style.backgroundColor = originalBg
+    }
+  }, [])
+
   const loadAll = async () => {
     if (!user) return
 
@@ -156,7 +164,7 @@ export default function Perfil() {
 
   if (loading) {
     return (
-      <div className="w-full min-h-[60vh] flex flex-col justify-center items-center space-y-4 bg-[#f4f7f5]">
+      <div className="w-full min-h-screen bg-[#e2f3ec] flex flex-col justify-center items-center space-y-4">
         <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
         <p className="text-xs font-bold text-slate-400">Cargando perfil...</p>
       </div>
@@ -164,11 +172,11 @@ export default function Perfil() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-[#f4f7f5] p-3 sm:p-6 lg:p-8 flex justify-center">
-      <div className="w-full max-w-[1200px] space-y-6 pb-16 font-sans text-slate-800">
+    <div className="w-full min-h-screen bg-[#e2f3ec] p-3 sm:p-6 lg:p-8 flex justify-center">
+      <div className="w-full max-w-[1400px] space-y-6 pb-16 font-sans text-slate-800">
 
         {/* HEADER DE LA PÁGINA */}
-        <div className="space-y-1 bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-xs">
+        <div className="space-y-1 bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-xs">
           <h1 className="text-xl sm:text-2xl font-black text-[#1e293b] tracking-tight">
             Mi Perfil 👤
           </h1>
@@ -182,7 +190,7 @@ export default function Perfil() {
           
           {/* COLUMNA IZQUIERDA: RESUMEN DE USUARIO Y STATS (Ocupa 5 columnas en PC) */}
           <div className="lg:col-span-5 space-y-4">
-            <div className="bg-white rounded-[2rem] border border-[#51e29d]/60 p-5 sm:p-6 flex flex-col gap-5 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)]">
+            <div className="bg-white rounded-3xl border border-[#51e29d]/60 p-5 sm:p-6 flex flex-col gap-5 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)]">
               <div className="flex gap-4 items-center">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center text-xl sm:text-2xl font-black shrink-0 border border-emerald-200 bg-[#e2faee] text-[#009660] shadow-xs">
                   {getInitials()}
@@ -251,7 +259,7 @@ export default function Perfil() {
             {/* BOTÓN CONFIGURACIÓN */}
             <button
               onClick={() => navigate('/configuracion')}
-              className="w-full p-4 rounded-2xl bg-white border border-[#51e29d]/60 hover:bg-slate-50 flex justify-between items-center transition-colors shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] cursor-pointer text-xs font-black text-slate-700"
+              className="w-full p-4 rounded-3xl bg-white border border-[#51e29d]/60 hover:bg-slate-50 flex justify-between items-center transition-colors shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)] cursor-pointer text-xs font-black text-slate-700"
             >
               <span className="flex items-center gap-2">⚙️ Configuración y Sensores</span>
               <span className="text-slate-400">❯</span>
@@ -260,7 +268,7 @@ export default function Perfil() {
 
           {/* COLUMNA DERECHA: FORMULARIO DE EDICIÓN (Ocupa 7 columnas en PC) */}
           <div className="lg:col-span-7">
-            <div className="bg-white rounded-[2rem] border border-[#51e29d]/60 p-6 sm:p-8 space-y-4 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)]">
+            <div className="bg-white rounded-3xl border border-[#51e29d]/60 p-6 sm:p-8 space-y-4 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)]">
               <h3 className="text-xs text-[#009660] font-black tracking-wider uppercase pl-1">
                 ✏️ Editar Información
               </h3>
@@ -279,7 +287,7 @@ export default function Perfil() {
                     })
                   }
                   placeholder="Nombre completo"
-                  className="w-full rounded-xl p-3.5 text-slate-700 bg-[#f8fafc] border border-slate-200/60 focus:border-emerald-500 focus:bg-white outline-none text-xs font-bold transition-all shadow-xs"
+                  className="w-full rounded-2xl p-3.5 text-slate-700 bg-[#f8fafc] border border-slate-200/60 focus:border-emerald-500 focus:bg-white outline-none text-xs font-bold transition-all shadow-xs"
                 />
               </div>
 
@@ -297,7 +305,7 @@ export default function Perfil() {
                       birth_date: e.target.value
                     })
                   }
-                  className="w-full rounded-xl p-3.5 text-slate-700 bg-[#f8fafc] border border-slate-200/60 focus:border-emerald-500 focus:bg-white outline-none text-xs font-bold transition-all shadow-xs"
+                  className="w-full rounded-2xl p-3.5 text-slate-700 bg-[#f8fafc] border border-slate-200/60 focus:border-emerald-500 focus:bg-white outline-none text-xs font-bold transition-all shadow-xs"
                 />
               </div>
 
@@ -317,7 +325,7 @@ export default function Perfil() {
                         flag: c?.flag ?? ''
                       })
                     }}
-                    className="w-full rounded-xl p-3.5 text-slate-700 bg-[#f8fafc] border border-slate-200/60 focus:border-emerald-500 focus:bg-white outline-none text-xs font-bold transition-all appearance-none cursor-pointer shadow-xs"
+                    className="w-full rounded-2xl p-3.5 text-slate-700 bg-[#f8fafc] border border-slate-200/60 focus:border-emerald-500 focus:bg-white outline-none text-xs font-bold transition-all appearance-none cursor-pointer shadow-xs"
                   >
                     <option value="">
                       Selecciona tu país 🌎
@@ -340,7 +348,7 @@ export default function Perfil() {
               </div>
 
               {saved && (
-                <div className="text-emerald-600 text-[11px] font-black text-center bg-emerald-50 py-3 rounded-xl border border-emerald-100 shadow-xs">
+                <div className="text-emerald-600 text-[11px] font-black text-center bg-emerald-50 py-3 rounded-2xl border border-emerald-100 shadow-xs">
                   ✓ Perfil actualizado con éxito
                 </div>
               )}
@@ -349,7 +357,7 @@ export default function Perfil() {
                 <button
                   onClick={saveProfile}
                   disabled={saving}
-                  className="w-full rounded-xl py-3.5 text-white font-black text-xs bg-[#10b981] hover:bg-[#059669] transition-colors shadow-xs cursor-pointer disabled:opacity-60"
+                  className="w-full rounded-2xl py-3.5 text-white font-black text-xs bg-[#10b981] hover:bg-[#059669] transition-colors shadow-xs cursor-pointer disabled:opacity-60"
                 >
                   {saving ? 'Guardando...' : '💾 Guardar cambios'}
                 </button>

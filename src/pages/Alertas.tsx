@@ -39,6 +39,14 @@ export default function Alertas() {
 
   useEffect(() => { loadAlerts() }, [])
 
+  useEffect(() => {
+    const originalBg = document.body.style.backgroundColor
+    document.body.style.backgroundColor = '#e2f3ec'
+    return () => {
+      document.body.style.backgroundColor = originalBg
+    }
+  }, [])
+
   const loadAlerts = async () => {
     if (!user) return
 
@@ -105,7 +113,7 @@ export default function Alertas() {
 
   if (loading) {
     return (
-      <div className="w-full min-h-[60vh] flex flex-col justify-center items-center space-y-4 bg-[#f4f7f5]">
+      <div className="w-full min-h-[60vh] flex flex-col justify-center items-center space-y-4 bg-[#e2f3ec]">
         <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
         <p className="text-xs font-bold text-slate-400">Cargando alertas...</p>
       </div>
@@ -113,11 +121,11 @@ export default function Alertas() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-[#f4f7f5] p-3 sm:p-6 lg:p-8 flex justify-center">
-      <div className="w-full max-w-[1200px] space-y-6 pb-16 font-sans text-slate-800">
+    <div className="w-full min-h-screen bg-[#e2f3ec] p-3 sm:p-6 lg:p-8">
+      <div className="w-full max-w-[1400px] mx-auto space-y-6 pb-16 font-sans text-slate-800">
 
         {/* HEADER DE LA PÁGINA */}
-        <div className="space-y-1 bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-xs">
+        <div className="space-y-1 bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-xs">
           <div className="flex items-center justify-between">
             <h1 className="text-xl sm:text-2xl font-black text-[#1e293b] tracking-tight">
               Alertas de tus plantas 🔔
@@ -187,7 +195,7 @@ export default function Alertas() {
               return (
                 <div
                   key={alert.id}
-                  className={`bg-white rounded-2xl p-4 sm:p-5 border transition-all flex flex-col justify-between ${
+                  className={`bg-white rounded-3xl p-4 sm:p-5 border transition-all flex flex-col justify-between ${
                     isNew 
                       ? 'border-red-200 shadow-xs bg-red-50/5' 
                       : 'border-[#51e29d]/60 opacity-60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)]'
