@@ -190,12 +190,13 @@ export default function MiHuerto() {
   const [showToast, setShowToast] = useState(false)
   const initialized = useRef(false)
 
+  // Recargar datos cuando el usuario o el estado premium cambien
   useEffect(() => {
     if (!user) return
     if (!initialized.current) {
       initialized.current = true
-      loadData()
     }
+    loadData()
   }, [user, isPremium])
 
   useEffect(() => {
@@ -584,7 +585,6 @@ export default function MiHuerto() {
                   </div>
                 </div>
 
-                {/* BOTÓN RÁPIDO PARA QUITAR PLANTA */}
                 {plantModalSpace.plant_id !== null && (
                   <button
                     type="button"
