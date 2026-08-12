@@ -13,13 +13,29 @@ serve(async (req) => {
   try {
     const urlParams = new URL(req.url).searchParams
     
+    // Manejo de redirección cuando Stripe regresa
     if (urlParams.get('success') === 'true') {
       const successUserId = urlParams.get('user_id')
-      return Response.redirect(`com.mihuerto.app://success?user_id=${successUserId}`, 303)
+      const isNative = urlParams.get('is_native') === 'true'
+
+      if (isNative) {
+        // Solo para Android / Nox / App nativa
+        return Response.redirect(`com.mihuerto.app://success?user_id=${successUserId}`, 303)
+      } else {
+        // Para web normal / PC
+        const appUrl = Deno.env.get("APP_URL") || "https://fdayefjmebnsrxbkuetq.supabase.co"
+        return Response.redirect(`${appUrl}/success?user_id=${successUserId}`, 303)
+      }
     }
 
     if (urlParams.get('cancel') === 'true') {
-      return Response.redirect(`com.mihuerto.app://configuracion`, 303)
+      const isNative = urlParams.get('is_native') === 'true'
+      if (isNative) {
+        return Response.redirect(`com.mihuerto.app://configuracion`, 303)
+      } else {
+        const appUrl = Deno.env.get("APP_URL") || "https://fdayefjmebnsrxbkuetq.supabase.co"
+        return Response.redirect(`${appUrl}/configuracion`, 303)
+      }
     }
 
     const { user_id, email, platform } = await req.json()
@@ -39,13 +55,16 @@ serve(async (req) => {
       throw new Error("Faltan configurar las variables de entorno de Stripe en Supabase.")
     }
 
-    const successUrl = platform === 'android'
-      ? `${appUrl}/functions/v1/create-checkout?success=true&user_id=${user_id}`
-      : `${appUrl}/success?user_id=${user_id}`
+    const isNativePlatform = platform === 'android' || platform === 'ios'
 
-    const cancelUrl = platform === 'android'
-      ? `${appUrl}/functions/v1/create-checkout?cancel=true`
-      : `${appUrl}/configuracion`
+    // Definimos las URLs de retorno dependiendo de si es la app o la web
+    const successUrl = isNativePlatform
+      ? `${appUrl}/functions/v1/create-checkout?success=true&user_id=${user_id}&is_native=true`
+      : `${appUrl}/success?user_id=${user_id}&is_native=false`
+
+    const cancelUrl = isNativePlatform
+      ? `${appUrl}/functions/v1/create-checkout?cancel=true&is_native=true`
+      : `${appUrl}/configuracion?is_native=false`
 
     const bodyParams = new URLSearchParams({
       'mode': 'subscription',
@@ -55,7 +74,6 @@ serve(async (req) => {
       'success_url': successUrl,
       'cancel_url': cancelUrl,
       'metadata[user_id]': user_id,
-      // IMPORTANTE: Esto asegura que la suscripción heredé el user_id en sus metadatos
       'subscription_data[metadata[user_id]]': user_id,
     })
 

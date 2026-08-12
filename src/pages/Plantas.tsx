@@ -70,15 +70,16 @@ export default function Plantas() {
 
         {/* BUSCADOR Y FILTROS SUPERIORES */}
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between bg-white p-4 rounded-3xl border border-slate-100 shadow-xs">
-          {/* BUSCADOR */}
-          <div className="relative flex-1">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+          
+          {/* BUSCADOR CORREGIDO CON FLEXBOX */}
+          <div className="flex items-center bg-[#f4f7f5] border border-slate-200/60 rounded-2xl px-4 py-3 flex-1 focus-within:border-emerald-500 transition-colors shadow-3xs">
+            <span className="text-slate-400 text-xs mr-3 select-none">🔍</span>
             <input
               type="text"
               placeholder="Buscar planta..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full bg-[#f4f7f5] text-slate-800 placeholder-slate-400 rounded-2xl pl-10 pr-4 py-3 outline-none border border-slate-200/60 text-xs font-semibold focus:border-emerald-500 transition-colors shadow-3xs"
+              className="w-full bg-transparent text-slate-800 placeholder-slate-400 outline-none text-xs font-semibold"
             />
           </div>
 

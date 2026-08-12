@@ -36,25 +36,26 @@ function getStatus(space: Space): SpaceStatus {
 
 function SpaceCard({
   space,
-  onAssignSensor,
-  onRemoveSensor,
   onOpenPlantModal,
   onVerDetalle,
+  onConnectSensor,
+  onDetachSensor,
 }: {
   space: Space
-  onAssignSensor: () => void
-  onRemoveSensor: (sensorId: number) => void
   onOpenPlantModal: () => void
   onVerDetalle: () => void
+  onConnectSensor: () => void
+  onDetachSensor: () => void
 }) {
   const status = getStatus(space)
   const connectedSensor = space.sensors?.[0]
+  const isWarning = status === 'warning'
 
   if (status === 'empty') {
     return (
       <div
         onClick={onOpenPlantModal}
-        className="bg-white rounded-[2rem] border-2 border-dashed border-[#51e29d] p-3 sm:p-5 flex flex-col items-center justify-center text-center cursor-pointer transition active:scale-98 aspect-[4/5] min-h-[200px] shadow-sm hover:border-emerald-500"
+        className="bg-white rounded-[2rem] border-2 border-dashed border-[#51e29d] p-3 sm:p-5 flex flex-col items-center justify-center text-center cursor-pointer transition active:scale-98 aspect-[4/5] min-h-[220px] shadow-sm hover:border-emerald-500"
       >
         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl border-2 border-dashed border-[#51e29d] flex items-center justify-center text-[#22c55e] text-lg sm:text-xl font-bold mb-2 sm:mb-3 shrink-0">
           +
@@ -67,10 +68,9 @@ function SpaceCard({
     )
   }
 
-  const isWarning = status === 'warning'
   return (
     <div
-      className={`bg-white rounded-[2rem] border p-3 sm:p-5 flex flex-col items-center justify-between text-center transition shadow-xs min-h-[220px] sm:min-h-[240px] relative ${
+      className={`bg-white rounded-[2rem] border p-3 sm:p-5 flex flex-col items-center justify-between text-center transition shadow-xs min-h-[240px] relative ${
         isWarning ? 'border-red-200 bg-red-50/10' : 'border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.12)]'
       }`}
     >
@@ -94,9 +94,9 @@ function SpaceCard({
         )}
       </div>
 
-      <div className="w-full flex flex-col items-center gap-1.5 sm:gap-2 py-1">
+      <div className="w-full flex flex-col items-center gap-1.5 py-1">
         {connectedSensor ? (
-          <div className="w-full grid grid-cols-2 gap-1.5 sm:gap-2">
+          <div className="w-full grid grid-cols-2 gap-1.5">
             <div className="bg-orange-50 rounded-xl py-1.5 px-1">
               <p className="text-xs font-black text-orange-500 leading-none">
                 {space.latest_reading ? `${space.latest_reading.temperature.toFixed(1)}°C` : '--'}
@@ -111,55 +111,45 @@ function SpaceCard({
             </div>
           </div>
         ) : (
-          <div className="inline-flex items-center gap-1.5 text-[10px] font-extrabold px-3 py-1 bg-slate-100 text-slate-500 rounded-full">
+          <div className="inline-flex items-center gap-1.5 text-[10px] font-extrabold px-3 py-1 bg-slate-100 text-slate-500 rounded-full my-1">
             <span className="w-1.5 h-1.5 bg-slate-400 rounded-full" />
             Sin sensor
           </div>
         )}
 
-        {connectedSensor ? (
-          <div className="w-full flex gap-1 sm:gap-1.5 mt-0.5">
+        <div className="w-full flex gap-1.5 mt-0.5">
+          {connectedSensor ? (
             <button
               onClick={(e) => { e.stopPropagation(); onVerDetalle() }}
-              className="flex-1 py-1.5 px-1 sm:px-2 rounded-xl text-[10px] font-black text-white bg-[#10b981] hover:bg-[#059669] transition-all cursor-pointer shadow-xs truncate"
+              className="flex-1 py-1.5 px-1 rounded-xl text-[10px] font-black text-white bg-[#10b981] hover:bg-[#059669] transition-all cursor-pointer shadow-xs truncate"
             >
               Ver detalle
             </button>
+          ) : (
             <button
-              onClick={(e) => { e.stopPropagation(); onOpenPlantModal() }}
-              className="flex-1 py-1.5 px-1 sm:px-2 rounded-xl text-[10px] font-black text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-all cursor-pointer shadow-xs truncate"
+              onClick={(e) => { e.stopPropagation(); onConnectSensor() }}
+              className="w-full py-1.5 px-1 rounded-xl text-[10px] font-black text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-all cursor-pointer border border-emerald-200 shadow-3xs truncate"
             >
-              Cambiar
+              📡 Conectar sensor
             </button>
-          </div>
-        ) : (
-          <div className="w-full flex flex-col items-center gap-1">
-            <button
-              onClick={(e) => { e.stopPropagation(); onAssignSensor() }}
-              className="inline-flex items-center justify-center gap-1 text-[10px] font-bold w-full py-1 bg-slate-50 text-slate-500 rounded-xl border border-slate-200 hover:bg-slate-100 transition-colors cursor-pointer"
-            >
-              <svg className="w-3 h-3 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18M10.268 5.732a9 9 0 0110.15 10.15M14.507 9.493a5 5 0 015.006 5.006M12 19a7 7 0 01-5.111-2.222" />
-              </svg>
-              Conectar sensor
-            </button>
-            <button
-              onClick={onOpenPlantModal}
-              className="w-full py-1.5 rounded-xl text-[10px] font-black text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-all cursor-pointer shadow-xs"
-            >
-              Cambiar planta
-            </button>
-          </div>
-        )}
+          )}
+          
+          <button
+            onClick={(e) => { e.stopPropagation(); onOpenPlantModal() }}
+            className="flex-1 py-1.5 px-1 rounded-xl text-[10px] font-black text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-all cursor-pointer shadow-xs truncate"
+          >
+            Cambiar planta
+          </button>
+        </div>
 
         {connectedSensor && (
-          <div className="flex flex-col items-center gap-0.5 mt-0.5">
-            <span className="inline-flex items-center gap-1 text-[9px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full max-w-full truncate">
+          <div className="flex items-center justify-center gap-2 mt-1 w-full">
+            <span className="text-[9px] font-bold text-slate-400 truncate">
               📡 {connectedSensor.name}
             </span>
             <button
-              onClick={(e) => { e.stopPropagation(); onRemoveSensor(connectedSensor.id) }}
-              className="text-[8px] font-black text-red-400 hover:text-red-500 underline cursor-pointer"
+              onClick={(e) => { e.stopPropagation(); onDetachSensor() }}
+              className="text-[9px] font-bold text-red-500 hover:underline cursor-pointer shrink-0"
             >
               Quitar sensor
             </button>
@@ -174,7 +164,7 @@ function LockedSpaceCard({ onUnlock }: { onUnlock: () => void }) {
   return (
     <div
       onClick={onUnlock}
-      className="bg-slate-50/70 rounded-[2rem] border border-dashed border-slate-300 p-4 sm:p-5 flex flex-col items-center justify-center text-center opacity-80 hover:opacity-100 transition-opacity cursor-pointer aspect-[4/5] min-h-[200px]"
+      className="bg-slate-50/70 rounded-[2rem] border border-dashed border-slate-300 p-4 sm:p-5 flex flex-col items-center justify-center text-center opacity-80 hover:opacity-100 transition-opacity cursor-pointer aspect-[4/5] min-h-[220px]"
     >
       <span className="text-xl mb-2">🔒</span>
       <p className="font-black text-slate-500 text-xs tracking-tight">Premium</p>
@@ -193,8 +183,6 @@ export default function MiHuerto() {
   const [fullName, setFullName] = useState('')
   const [isRedirecting, setIsRedirecting] = useState(false)
 
-  const [assigningToSpaceId, setAssigningToSpaceId] = useState<number | null>(null)
-  const [availableSensors, setAvailableSensors] = useState<{ id: number; name: string }[]>([])
   const [plantModalSpace, setPlantModalSpace] = useState<Space | null>(null)
   const [selectedPlantId, setSelectedPlantId] = useState<number | null>(null)
   const [detalleSpace, setDetalleSpace] = useState<Space | null>(null)
@@ -208,33 +196,13 @@ export default function MiHuerto() {
       initialized.current = true
       loadData()
     }
-  }, [user])
+  }, [user, isPremium])
 
   useEffect(() => {
     const originalBg = document.body.style.backgroundColor
     document.body.style.backgroundColor = '#e2f3ec'
     return () => {
       document.body.style.backgroundColor = originalBg
-    }
-  }, [])
-
-  useEffect(() => {
-    const setupAppListener = async () => {
-      const { App: CapacitorApp } = await import('@capacitor/app').catch(() => ({ App: null }))
-      if (!CapacitorApp) return
-      const listener = await CapacitorApp.addListener('appStateChange', ({ isActive }) => {
-        if (isActive) {
-          loadData()
-        }
-      })
-      return listener
-    }
-
-    let appListener: any
-    setupAppListener().then(l => appListener = l)
-
-    return () => {
-      if (appListener) appListener.remove()
     }
   }, [])
 
@@ -255,7 +223,7 @@ export default function MiHuerto() {
         .order('name')
       setPlants(plantsData ?? [])
 
-      let { data, error } = await supabase
+      let { data: spacesData, error } = await supabase
         .from('spaces')
         .select(`*, plant_catalog (id, name, emoji), sensors (id, name, active)`)
         .eq('user_id', user.id)
@@ -263,7 +231,7 @@ export default function MiHuerto() {
 
       if (error) throw error
 
-      if (!data || data.length === 0) {
+      if (!spacesData || spacesData.length === 0) {
         const defaultSpaces = Array.from({ length: PREMIUM_LIMIT }, (_, i) => ({
           user_id: user.id,
           slot_number: i + 1,
@@ -276,13 +244,23 @@ export default function MiHuerto() {
           .select(`*, plant_catalog (id, name, emoji), sensors (id, name, active)`)
           .eq('user_id', user.id)
           .order('slot_number')
-        data = newData
+        spacesData = newData
       }
 
+      const spacesList = (spacesData as Space[]) ?? []
+      const targetLimit = isPremium ? PREMIUM_LIMIT : FREE_LIMIT
+      const validSpaces = spacesList.slice(0, targetLimit)
+
       const enriched = await Promise.all(
-        (data as Space[]).map(async (space) => {
-          if (!space.sensors || space.sensors.length === 0) return space
-          const sensorId = space.sensors[0].id
+        validSpaces.map(async (space) => {
+          const activeSensors = space.sensors?.filter(s => s.active) ?? []
+          const connectedSensor = activeSensors[0] || space.sensors?.[0]
+
+          if (!connectedSensor || !connectedSensor.active) {
+            return { ...space, sensors: [] }
+          }
+
+          const sensorId = connectedSensor.id
 
           const { data: reading } = await supabase
             .from('readings')
@@ -300,6 +278,7 @@ export default function MiHuerto() {
 
           return {
             ...space,
+            sensors: [connectedSensor],
             latest_reading: reading ?? null,
             unacknowledged_alerts: count ?? 0
           }
@@ -313,44 +292,56 @@ export default function MiHuerto() {
     }
   }
 
-  const fetchAvailableSensors = async () => {
-    const { data } = await supabase
+  const handleConnectSensor = async (space: Space) => {
+    const { data: existing } = await supabase
       .from('sensors')
-      .select('id, name')
-      .is('space_id', null)
-    setAvailableSensors(data ?? [])
-  }
+      .select('id')
+      .eq('space_id', space.id)
+      .maybeSingle()
 
-  const handleOpenAssignModal = async (spaceId: number) => {
-    setAssigningToSpaceId(spaceId)
-    await fetchAvailableSensors()
-  }
+    if (existing) {
+      await supabase.from('sensors').update({ active: true }).eq('id', existing.id)
+    } else {
+      const { data: orphanSensor } = await supabase
+        .from('sensors')
+        .select('id')
+        .is('space_id', null)
+        .limit(1)
+        .maybeSingle()
 
-  const handleAssignSensor = async (sensorId: number) => {
-    if (!assigningToSpaceId) return
-    await supabase
-      .from('sensors')
-      .update({ space_id: assigningToSpaceId })
-      .eq('id', sensorId)
-
-    setAssigningToSpaceId(null)
+      if (orphanSensor) {
+        await supabase
+          .from('sensors')
+          .update({ 
+            space_id: space.id, 
+            name: `Sensor ${space.slot_number}`, 
+            active: true 
+          })
+          .eq('id', orphanSensor.id)
+      } else {
+        await supabase.from('sensors').insert({
+          name: `Sensor ${space.slot_number}`,
+          space_id: space.id,
+          min_temp: 10,
+          max_temp: 35,
+          min_humidity: 30,
+          max_humidity: 80,
+          active: true
+        })
+      }
+    }
     loadData()
   }
 
-  const handleRemoveSensor = async (sensorId: number) => {
-    if (!sensorId) return
-    const confirm = window.confirm('¿Desvincular este sensor de este espacio?')
-    if (!confirm) return
-
-    const { error } = await supabase
+  const handleDetachSensor = async (space: Space) => {
+    if (!space.sensors || space.sensors.length === 0) return
+    const sensorId = space.sensors[0].id
+    
+    await supabase
       .from('sensors')
-      .update({ space_id: null })
+      .update({ active: false })
       .eq('id', sensorId)
-
-    if (!error) {
-      setShowToast(true)
-      setTimeout(() => setShowToast(false), 3000)
-    }
+      
     loadData()
   }
 
@@ -388,8 +379,12 @@ export default function MiHuerto() {
   const alertCount = spaces.reduce((acc, s) => acc + (s.unacknowledged_alerts ?? 0), 0)
   const healthyCount = spaces.filter(s => s.plant_id && (s.unacknowledged_alerts ?? 0) === 0).length
 
-  const visibleSpaces = spaces.slice(0, FREE_LIMIT)
-  const lockedSpaces = spaces.slice(FREE_LIMIT)
+  const lockedSpaces = Array.from({ length: PREMIUM_LIMIT - FREE_LIMIT }, (_, i) => ({
+    id: 999 + i,
+    slot_number: FREE_LIMIT + i + 1,
+    name: `Espacio ${FREE_LIMIT + i + 1}`,
+    plant_id: null,
+  }))
 
   if (loading) {
     return (
@@ -404,7 +399,6 @@ export default function MiHuerto() {
     <div className="w-full min-h-screen bg-[#e2f3ec] p-3 sm:p-6 lg:p-8 flex justify-center">
       <div className="w-full max-w-[1200px] space-y-4 sm:space-y-5 pb-16 font-sans text-slate-800">
 
-        {/* Toast de Éxito */}
         {showToast && (
           <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-xs bg-[#e2faee] border border-emerald-200 text-slate-800 rounded-xl px-4 py-3 flex items-center gap-2.5 shadow-md animate-fadeIn">
             <span className="text-emerald-600 bg-white w-5 h-5 rounded-md flex items-center justify-center font-bold text-xs border border-emerald-100 shrink-0">
@@ -414,7 +408,6 @@ export default function MiHuerto() {
           </div>
         )}
 
-        {/* BIENVENIDA + PLAN PREMIUM */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#e2f3ec] p-4 sm:p-6 rounded-3xl border border-emerald-200 shadow-xs">
           <div className="space-y-1">
             <h1 className="text-lg sm:text-2xl font-black text-[#1e293b] flex items-center gap-1.5 tracking-tight">
@@ -442,7 +435,6 @@ export default function MiHuerto() {
           )}
         </div>
 
-        {/* CONTADORES */}
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <div className="bg-white rounded-2xl p-3 sm:p-4 border border-[#51e29d]/60 shadow-[0_4px_20px_-4px_rgba(81,226,157,0.15)] flex items-center gap-2 sm:gap-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#e2faee] text-[#009660] flex items-center justify-center text-sm sm:text-lg shrink-0">
@@ -475,7 +467,6 @@ export default function MiHuerto() {
           </div>
         </div>
 
-        {/* BANNER DE ALERTAS */}
         {alertCount > 0 && (
           <button
             onClick={() => window.location.assign('/alertas')}
@@ -491,7 +482,6 @@ export default function MiHuerto() {
           </button>
         )}
 
-        {/* MIS ESPACIOS */}
         <div className="space-y-3 pt-1">
           <div className="flex items-center justify-between pl-1">
             <h3 className="font-extrabold text-[#1e293b] text-sm flex items-center gap-1.5">
@@ -502,37 +492,24 @@ export default function MiHuerto() {
             </span>
           </div>
 
-          {/* CUADRÍCULA RESPONSIVE */}
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
-            {visibleSpaces.map(space => (
+            {spaces.map(space => (
               <SpaceCard
                 key={space.id}
                 space={space}
-                onAssignSensor={() => handleOpenAssignModal(space.id)}
-                onRemoveSensor={(id) => handleRemoveSensor(id)}
                 onOpenPlantModal={() => handleOpenPlantModal(space)}
                 onVerDetalle={() => setDetalleSpace(space)}
+                onConnectSensor={() => handleConnectSensor(space)}
+                onDetachSensor={() => handleDetachSensor(space)}
               />
             ))}
 
             {!isPremium && lockedSpaces.map(space => (
               <LockedSpaceCard key={space.id} onUnlock={handleStripeCheckout} />
             ))}
-
-            {isPremium && lockedSpaces.map(space => (
-              <SpaceCard
-                key={space.id}
-                space={space}
-                onAssignSensor={() => handleOpenAssignModal(space.id)}
-                onRemoveSensor={(id) => handleRemoveSensor(id)}
-                onOpenPlantModal={() => handleOpenPlantModal(space)}
-                onVerDetalle={() => setDetalleSpace(space)}
-              />
-            ))}
           </div>
         </div>
 
-        {/* MODAL VER DETALLE */}
         {detalleSpace && (
           <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
             <div className="w-full max-w-sm bg-white rounded-[2rem] overflow-hidden shadow-2xl border border-slate-100 p-6 space-y-4 animate-fadeIn">
@@ -571,7 +548,6 @@ export default function MiHuerto() {
           </div>
         )}
 
-        {/* MODAL ASIGNAR PLANTA */}
         {plantModalSpace && (
           <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
             <div className="w-full max-w-sm bg-white rounded-[2rem] overflow-hidden shadow-2xl border border-slate-100 p-6 space-y-5 animate-fadeIn">
@@ -587,24 +563,37 @@ export default function MiHuerto() {
                 </button>
               </div>
 
-              <div className="relative">
-                <select
-                  value={selectedPlantId ?? ''}
-                  onChange={e => setSelectedPlantId(Number(e.target.value) || null)}
-                  className="w-full bg-white border border-emerald-400 text-slate-700 rounded-xl px-4 py-3 outline-none text-xs font-extrabold appearance-none cursor-pointer shadow-xs"
-                >
-                  <option value="">Seleccionar planta...</option>
-                  {plants.map(plant => (
-                    <option key={plant.id} value={plant.id}>
-                      {plant.emoji} {plant.name}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-400">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                  </svg>
+              <div className="space-y-3">
+                <div className="relative">
+                  <select
+                    value={selectedPlantId ?? ''}
+                    onChange={e => setSelectedPlantId(Number(e.target.value) || null)}
+                    className="w-full bg-white border border-emerald-400 text-slate-700 rounded-xl px-4 py-3 outline-none text-xs font-extrabold appearance-none cursor-pointer shadow-xs"
+                  >
+                    <option value="">Seleccionar planta...</option>
+                    {plants.map(plant => (
+                      <option key={plant.id} value={plant.id}>
+                        {plant.emoji} {plant.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-400">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </div>
                 </div>
+
+                {/* BOTÓN RÁPIDO PARA QUITAR PLANTA */}
+                {plantModalSpace.plant_id !== null && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPlantId(null)}
+                    className="w-full text-red-500 font-extrabold rounded-xl py-2.5 text-xs bg-red-50 hover:bg-red-100 transition-colors cursor-pointer border border-red-200"
+                  >
+                    🗑️ Quitar planta del espacio
+                  </button>
+                )}
               </div>
 
               <button
@@ -613,45 +602,6 @@ export default function MiHuerto() {
               >
                 Guardar
               </button>
-            </div>
-          </div>
-        )}
-
-        {/* MODAL CONECTAR SENSOR */}
-        {assigningToSpaceId && (
-          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-            <div className="w-full max-w-xs bg-white rounded-[2rem] overflow-hidden shadow-2xl border border-slate-100 p-5 space-y-4 animate-fadeIn">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <h3 className="font-black text-xs text-slate-800">📡 Conectar Sensor</h3>
-                <button
-                  onClick={() => setAssigningToSpaceId(null)}
-                  className="w-6 h-6 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 font-bold text-xs cursor-pointer hover:bg-slate-200"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {availableSensors.length === 0 ? (
-                <div className="text-center py-4 space-y-2">
-                  <p className="text-2xl">📡</p>
-                  <p className="text-[10px] text-slate-400 font-bold leading-normal">
-                    No hay sensores libres actualmente.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
-                  {availableSensors.map(sensor => (
-                    <button
-                      key={sensor.id}
-                      onClick={() => handleAssignSensor(sensor.id)}
-                      className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-left hover:border-emerald-300 transition-colors cursor-pointer"
-                    >
-                      <span className="text-[11px] font-bold text-slate-700 truncate">{sensor.name}</span>
-                      <span className="text-[#009660] font-black text-[10px] shrink-0 ml-2">Asignar ›</span>
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         )}
